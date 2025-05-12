@@ -142,7 +142,6 @@
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="Espora.cpp" />
     <ClCompile Include="Game.cpp" />
-    <ClCompile Include="GameCamera.cpp" />
     <ClCompile Include="Level.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Map.cpp" />
@@ -160,7 +159,6 @@
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="Espora.h" />
     <ClInclude Include="Game.h" />
-    <ClInclude Include="GameCamera.h" />
     <ClInclude Include="Level.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="Player.h" />

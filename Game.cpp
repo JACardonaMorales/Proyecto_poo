@@ -58,7 +58,10 @@ Game::~Game()
 
 void Game::updateView()
 {
-	this->window sf::View.setCenter(player.getPosition().x + 20, player.getPosition().y + 20); // +20 para el radio del círculo
+	//Update the view
+	sf::View view = this->window.getDefaultView();
+	view.setCenter(this->player->getPosition().x + this->player->getGlobalBounds().width / 2.f, this->player->getPosition().y + this->player->getGlobalBounds().height / 2.f);
+	this->window.setView(view);
 }
 
 void Game::updateInput()
