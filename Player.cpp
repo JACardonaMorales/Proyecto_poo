@@ -10,7 +10,7 @@ void Player::initTexture()
 {
 	if (!this->textureSheet.loadFromFile("assets/Ray/textures/SpriteRay.png"))
 	{
-		std::cout << "ERROR::PLAYER::Las texturas no han sido encontradas" << "\n";
+		std::cout << "ERROR::PLAYER::Las texturas no han sido encontradas" <<  std::endl;
 	}
 }
 
