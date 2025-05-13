@@ -8,7 +8,7 @@ void Player::initVariables()
 
 void Player::initTexture()
 {
-	if (!this->textureSheet.loadFromFile("assets/Ray/textures/SpriteRay.png"))
+	if (!this->textureSheet.loadFromFile("assets/Ray/textures/RaySprite.png"))
 	{
 		std::cout << "ERROR::PLAYER::Las texturas no han sido encontradas" <<  std::endl;
 	}
@@ -17,7 +17,7 @@ void Player::initTexture()
 void Player::initSprite()
 {
 	this->sprite.setTexture(this->textureSheet);
-	this->currentFrame = sf::IntRect(0, 0, 40, 50); 
+	this->currentFrame = sf::IntRect(0, 0, 223 / 3, 298 / 2); 
 
 	this->sprite.setTextureRect(this->currentFrame);
 	this->sprite.setScale(3.f, 3.f);
@@ -143,28 +143,30 @@ void Player::updateMovement()
 void Player::updateAnimations()
 {
 	float speedPercent = (abs(this->velocity.x) / this->velocityMax);
+	const float frameWidth = 223.f / 3;  // Ancho del sprite individual
+	const float frameHeight = 298.f / 2;
 
 	if (this->animState == PLAYER_ANIMATION_STATES::IDLE)
 	{
-		if (this->animationTimer.getElapsedTime().asMilliseconds() >= 200.f || this->getAnimSwitch())
-		{
-			this->currentFrame.top = 0.0;
-			this->currentFrame.left += 40.0;
-			if (this->currentFrame.left > 160.0)
-				this->currentFrame.left = 0;
-
-			this->animationTimer.restart();
-			this->sprite.setTextureRect(this->currentFrame);
-		}
+		this->currentFrame.left = 0.f;
+		this->currentFrame.top = 0.f;
+		this->currentFrame.width = frameWidth;
+		this->currentFrame.height = frameHeight;
+		this->sprite.setTextureRect(this->currentFrame);
 	}
 	else if (this->animState == PLAYER_ANIMATION_STATES::MOVING_RIGHT)
 	{
-		if (this->animationTimer.getElapsedTime().asMilliseconds() >= 40.f / speedPercent || this->getAnimSwitch())
+		if (this->animationTimer.getElapsedTime().asMilliseconds() >= 90.f / speedPercent || this->getAnimSwitch())
 		{
-			this->currentFrame.top = 50.f;
-			this->currentFrame.left += 40.f;
-			if (this->currentFrame.left > 360.f)
-				this->currentFrame.left = 0;
+			// Caminar: Primera columna, primera fila
+   // De acuerdo a la imagen, parece que hay 3 frames en la primera columna
+			this->currentFrameIndex = (this->currentFrameIndex + 1) % 3;
+
+			// Calculamos la posición del frame actual en el spritesheet
+			this->currentFrame.left = this->currentFrameIndex * frameWidth;
+			this->currentFrame.top = 0.f; // Primera fila
+			this->currentFrame.width = frameWidth;
+			this->currentFrame.height = frameHeight;
 
 			this->animationTimer.restart();
 			this->sprite.setTextureRect(this->currentFrame);
@@ -175,12 +177,15 @@ void Player::updateAnimations()
 	}
 	else if (this->animState == PLAYER_ANIMATION_STATES::MOVING_LEFT)
 	{
-		if (this->animationTimer.getElapsedTime().asMilliseconds() >= 40.f / speedPercent || this->getAnimSwitch())
+		if (this->animationTimer.getElapsedTime().asMilliseconds() >= 90.f / speedPercent || this->getAnimSwitch())
 		{
-			this->currentFrame.top = 50.f;
-			this->currentFrame.left += 40.f;
-			if (this->currentFrame.left > 360.f)
-				this->currentFrame.left = 0;
+			// Mismos frames que para moverse a la derecha
+			this->currentFrameIndex = (this->currentFrameIndex + 1) % 3;
+
+			this->currentFrame.left = this->currentFrameIndex * frameWidth;
+			this->currentFrame.top = 0.f; // Primera fila
+			this->currentFrame.width = frameWidth;
+			this->currentFrame.height = frameHeight;
 
 			this->animationTimer.restart();
 			this->sprite.setTextureRect(this->currentFrame);

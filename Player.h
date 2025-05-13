@@ -13,6 +13,7 @@ private:
 	short animState;
 	sf::IntRect currentFrame;
 	bool animationSwitch;
+	int currentFrameIndex = 0; // Índice del frame actual
 
 	//Physics
 	sf::Vector2f velocity;

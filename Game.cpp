@@ -155,6 +155,7 @@ void Game::render()
 {
 	this->window.clear();
 
+
 	this->renderTileMap();
 	this->renderPlayer();
 
