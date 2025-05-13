@@ -7,6 +7,7 @@ void Game::initWindow()
 	this->window.setFramerateLimit(60);
 	sf::View view = this->window.getDefaultView();
 	view.setCenter(1366 / 2, 768 / 2);
+	this->window.setView(view);
 }
 
 void Game::initInput()
@@ -38,7 +39,7 @@ void Game::initPlayer()
 
 void Game::initTileMap()
 {
-	this->tileMap = new TileMap(20, 20, &this->tileSheet, 50);
+	this->tileMap = new TileMap(200, 20, &this->tileSheet, 50);
 }
 
 Game::Game()
@@ -58,20 +59,34 @@ Game::~Game()
 
 void Game::updateView()
 {
-	//Update the view
+	// Obtenemos la vista actual
 	sf::View view = this->window.getDefaultView();
-	view.setCenter(this->player->getPosition().x + this->player->getGlobalBounds().width / 2.f, this->player->getPosition().y + this->player->getGlobalBounds().height / 2.f);
+
+	// Calculamos la posición x del jugador (centro)
+	float playerCenterX = this->player->getPosition().x + this->player->getGlobalBounds().width / 2.f;
+
+	// Calculamos la posición y inicial de la vista (no cambia durante los saltos)
+	float viewCenterY = view.getCenter().y;
+
+	// Actualizamos solo la coordenada X de la vista para seguir al jugador horizontalmente
+	view.setCenter(playerCenterX, viewCenterY);
+
+	// Aplicamos la vista actualizada
 	this->window.setView(view);
 }
 
+
 void Game::updateInput()
 {
-	//Update mouse positions
-	std::cout << int(sf::Mouse::getPosition(this->getWindow()).x) / int(this->tileMap->getTileSize()) << " " << int(sf::Mouse::getPosition(this->getWindow()).y) / int(this->tileMap->getTileSize()) << "\n";
-	const int mouseX = int(sf::Mouse::getPosition(this->getWindow()).x) / int(this->tileMap->getTileSize());
-	const int mouseY = int(sf::Mouse::getPosition(this->getWindow()).y) / int(this->tileMap->getTileSize());
+	// Convertimos la posición del mouse a coordenadas del juego
+	sf::Vector2i mousePos = sf::Mouse::getPosition(this->getWindow());
+	sf::Vector2f worldPos = this->window.mapPixelToCoords(mousePos);
 
-	//Player movement
+	// Calculamos la posición del tile donde está el mouse
+	const int mouseX = int(worldPos.x) / int(this->tileMap->getTileSize());
+	const int mouseY = int(worldPos.y) / int(this->tileMap->getTileSize());
+
+	// Movimiento del jugador
 	if (sf::Keyboard::isKeyPressed(this->keyboardMappings["KEY_MOVE_LEFT"]))
 	{
 		this->player->move(-1.f, 0.f);
@@ -86,7 +101,7 @@ void Game::updateInput()
 		this->player->jump();
 	}
 
-	//Tile functions
+	// Funciones de los tiles
 	if (sf::Mouse::isButtonPressed(this->mouseMappings["BTN_ADD_TILE"]))
 	{
 		this->tileMap->addTile(mouseX, mouseY);
@@ -96,6 +111,7 @@ void Game::updateInput()
 		this->tileMap->removeTile(mouseX, mouseY);
 	}
 }
+
 
 void Game::updatePlayer()
 {
@@ -139,6 +155,8 @@ void Game::update()
 	this->updateCollision();
 
 	this->updateTileMap();
+
+	this->updateView();
 }
 
 void Game::renderPlayer()
