@@ -1,11 +1,9 @@
 #include "stdafx.h"
 #include "Game.h"
 
-
 Map::Map(float cellSize)
 	: cellSize(cellSize), grid()
 {
-	// Constructor implementation (if needed)
 }
 
 void Map::createBoard(size_t width, size_t height)
@@ -23,28 +21,57 @@ void Map::createBoard(size_t width, size_t height)
 		{
 			last = !last;
 		}
-
 	}
 }
 
 void Map::Draw(Renderer& renderer)
 {
-	int x = 0;
-	for (const auto& column : grid)
+	// OPTIMIZACIÓN: Solo renderizar lo que está en pantalla
+	sf::Vector2f cameraPos = camera.position;
+	sf::Vector2f cameraSize = sf::Vector2f(800, 600); // Tamaño aproximado de vista
+
+	int startX = std::max(0, (int)((cameraPos.x - cameraSize.x / 2) / cellSize) - 1);
+	int endX = std::min((int)grid.size(), (int)((cameraPos.x + cameraSize.x / 2) / cellSize) + 1);
+	int startY = 0;
+	int endY = grid.empty() ? 0 : std::min((int)grid[0].size(), (int)((cameraPos.y + cameraSize.y / 2) / cellSize) + 1);
+
+	for (int x = startX; x < endX && x < (int)grid.size(); ++x)
 	{
-		int y = 0;
-		for (const auto& cell : column)
+		for (int y = startY; y < endY && y < (int)grid[x].size(); ++y)
 		{
-			if (cell)
+			if (grid[x][y] != 0)
 			{
-				renderer.Draw(Resources::textures["Tile"], 
-					sf::Vector2f(cellSize * x + cellSize / 2.0f,
-						cellSize * y * cellSize / 2.0f), 
-					sf::Vector2f(cellSize, cellSize));
+				sf::Vector2f position(
+					cellSize * x + cellSize / 2.0f,
+					cellSize * y + cellSize / 2.0f  // ESTE ERA EL BUG - estaba multiplicando por cellSize dos veces
+				);
+				sf::Vector2f size(cellSize, cellSize);
+
+				switch (grid[x][y]) {
+				case 1: // Solid Block
+					if (Resources::textures.find("Tile") != Resources::textures.end()) {
+						renderer.Draw(Resources::textures["Tile"], position, size);
+					}
+					break;
+				case 2: // Spike
+					if (Resources::textures.find("Spike") != Resources::textures.end()) {
+						renderer.Draw(Resources::textures["Spike"], position, size);
+					}
+					else if (Resources::textures.find("Tile") != Resources::textures.end()) {
+						renderer.Draw(Resources::textures["Tile"], position, size);
+					}
+					break;
+				case 3: // Door
+					if (Resources::textures.find("Door") != Resources::textures.end()) {
+						renderer.Draw(Resources::textures["Door"], position, size);
+					}
+					else if (Resources::textures.find("Tile") != Resources::textures.end()) {
+						renderer.Draw(Resources::textures["Tile"], position, size);
+					}
+					break;
+				}
 			}
-			y++;
 		}
-		x++;
 	}
 }
 
@@ -59,11 +86,19 @@ void Map::InitFromImage(const sf::Image& image)
 			sf::Color pixelColor = image.getPixel(x, y);
 			if (pixelColor == sf::Color::Black)
 			{
-				grid[x][y] = 1; // Set the cell to 1 for black pixels
+				grid[x][y] = 1; // Solid block for black pixels
+			}
+			else if (pixelColor == sf::Color::Red)
+			{
+				grid[x][y] = 2; // Spike for red pixels
+			}
+			else if (pixelColor == sf::Color::Blue)
+			{
+				grid[x][y] = 3; // Door for blue pixels
 			}
 			else
 			{
-				grid[x][y] = 0; // Set the cell to 0 for non-black pixels
+				grid[x][y] = 0; // Empty for other colors
 			}
 		}
 	}

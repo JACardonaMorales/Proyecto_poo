@@ -8,7 +8,7 @@
 extern Camera camera;
 
 void init(const sf::Window& window);
+void HandleInput(const sf::Event& event, const sf::RenderWindow& window);
 void Update(float deltaTime);
 void Render(Renderer& renderer);
-
-
+void RenderUI(sf::RenderWindow& window);
