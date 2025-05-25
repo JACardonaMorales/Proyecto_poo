@@ -1,43 +1,14 @@
 #pragma once
 #include"Player.h"
-#include"TileMap.h"
+#include"Camera.h"
+#include "Renderer.h"
+#include "Resources.h"
+#include "Map.h"
 
-class Game
-{
-private:
-	sf::RenderWindow window;
-	sf::Event ev;
-	sf::Texture tileSheet;
+extern Camera camera;
 
-	Player* player;
-	TileMap* tileMap;
-	std::map<std::string, sf::Keyboard::Key> keyboardMappings;
-	std::map<std::string, sf::Mouse::Button> mouseMappings;
+void init(const sf::Window& window);
+void Update(float deltaTime);
+void Render(Renderer& renderer);
 
-	void initWindow();
-	void initInput();
-	void initTileSheet();
-	void initPlayer();
-	void initTileMap();
-
-public:
-
-	//Functions
-	Game();
-	virtual ~Game();
-
-	//Functions
-	void updateView();
-	void updateInput();
-	void updatePlayer();
-	void updateCollision();
-	void updateTileMap();
-	void update();
-
-	void renderPlayer();
-	void renderTileMap();
-	void render();
-
-	const sf::RenderWindow& getWindow() const;
-};
 

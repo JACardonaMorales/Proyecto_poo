@@ -9,12 +9,12 @@ private:
 	sf::Texture textureSheet;
 	sf::Clock animationTimer;
 
-	//Animation
+	//Animacion
 	short animState;
 	sf::IntRect currentFrame;
 	bool animationSwitch;
 
-	//Physics
+	//Fisicas
 	sf::Vector2f velocity;
 	float velocityMax;
 	float velocityMin;

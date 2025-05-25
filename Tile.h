@@ -1,31 +1,35 @@
 #pragma once
 
-enum TileType {
+enum TILE_TYPES {
     EMPTY = 0,
-    SOLID,      // Bloque sólido (paredes)
-    PLATFORM,   // Plataforma (se puede saltar desde abajo)
-    LADDER,     // Escalera (permite subir y bajar)
-    SPIKE,      // Pinchos (daña al jugador)
-    DECORATION  // Elementos decorativos (sin colisión)
+    SOLID,
+    PLATFORM,
+    SPIKE,
+    EXIT
 };
 
 class Tile
 {
 private:
     sf::Sprite sprite;
-    TileType type;
+    sf::Texture textureSheet;
+    sf::RectangleShape shape;
+    sf::IntRect textureRect;
     bool damaging;
+    short type;
+    bool isCollider;
 
 public:
-    Tile(const unsigned& grid_pos_x, const unsigned& grid_pos_y, const unsigned& tile_size,
-        sf::Texture* texture_sheet, sf::IntRect texture_rect, TileType type, bool damaging = false);
+    Tile(float x, float y, float gridSize, sf::Texture& texture, sf::IntRect textureRect, short type, bool isCollider);
 
-    // Getters
+    // Accessors
+    const short& getType() const;
+    const bool& getIsCollider() const;
     const sf::FloatRect getGlobalBounds() const;
-    const TileType& getType() const;
-    const sf::Vector2f& getPosition() const;
-    const bool isDamaging() const;
+    const sf::Vector2f getPosition() const;
 
-    void update();
+    // Functions
+	void update();
+
     void render(sf::RenderTarget& target);
 };

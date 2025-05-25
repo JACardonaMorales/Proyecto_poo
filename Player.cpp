@@ -3,216 +3,270 @@
 
 void Player::initVariables()
 {
-	this->animState = PLAYER_ANIMATION_STATES::IDLE;
+    this->animState = PLAYER_ANIMATION_STATES::IDLE;
+    this->animationSwitch = true;
+
+    this->canJump = true;
+    this->isOnGround = false;
+    this->isOnPlatform = false;
+    this->isOnLadder = false;
 }
 
 void Player::initTexture()
 {
-	if (!this->textureSheet.loadFromFile("assets/Ray/textures/RaySprite.png"))
-	{
-		std::cout << "ERROR::PLAYER::Las texturas no han sido encontradas" <<  std::endl;
-	}
+    // Cargar textura del jugador
+    if (!this->textureSheet.loadFromFile("assets/Ray/textures/RaySprite.png"))
+    {
+        std::cout << "ERROR::PLAYER::Could not load the player sheet!" << "\n";
+    }
 }
 
 void Player::initSprite()
 {
-	this->sprite.setTexture(this->textureSheet);
-	this->currentFrame = sf::IntRect(0, 0, 223 / 3, 298 / 2); 
-
-	this->sprite.setTextureRect(this->currentFrame);
-	this->sprite.setScale(3.f, 3.f);
+    this->sprite.setTexture(this->textureSheet);
+    this->currentFrame = sf::IntRect(0, 0, 32, 32); // Ajusta según el tamaño real de tu sprite
+    this->sprite.setTextureRect(this->currentFrame);
+    this->sprite.setScale(2.f, 2.f);
 }
 
 void Player::initAnimations()
 {
-	this->animationTimer.restart();
-	this->animationSwitch = true;
-	this->currentFrame.left = 0.f;
+    this->animationTimer.restart();
 }
 
 void Player::initPhysics()
 {
-	this->velocityMax = 22.f;
-	this->velocityMin = 2.0f;
-	this->acceleration = 3.0f;
-	this->drag = 0.80f;
-	this->gravity = 3.f;
-	this->velocityMaxY = 30.f;
-	this->canJump = false;
+    this->velocityMax = 15.f;
+    this->velocityMin = 1.f;
+    this->acceleration = 2.f;
+    this->drag = 0.85f;
+    this->gravity = 0.8f;
+    this->velocityMaxY = 15.f;
 }
 
+// Constructor y Destructor
 Player::Player()
 {
-	this->initVariables();
-	this->initTexture();
-	this->initSprite();
-	this->initAnimations();
-	this->initPhysics();
+    this->initVariables();
+    this->initTexture();
+    this->initSprite();
+    this->initAnimations();
+    this->initPhysics();
 }
 
 Player::~Player()
 {
-
 }
 
+// Accessors
 const bool& Player::getAnimSwitch()
 {
-	bool anim_switch = this->animationSwitch;
+    bool anim_switch = this->animationSwitch;
 
-	if (this->animationSwitch)
-		this->animationSwitch = false;
+    if (this->animationSwitch)
+        this->animationSwitch = false;
 
-	return anim_switch;
+    return anim_switch;
 }
 
 const sf::Vector2f Player::getPosition() const
 {
-	return this->sprite.getPosition();
+    return this->sprite.getPosition();
 }
 
 const sf::FloatRect Player::getGlobalBounds() const
 {
-	return this->sprite.getGlobalBounds();
+    return this->sprite.getGlobalBounds();
 }
 
+const sf::Vector2f& Player::getVelocity() const
+{
+    return this->velocity;
+}
+
+// Modifiers
 void Player::setPosition(const float x, const float y)
 {
-	this->sprite.setPosition(x, y);
+    this->sprite.setPosition(x, y);
 }
 
 void Player::resetVelocityY()
 {
-	this->velocity.y = 0.0;
+    this->velocity.y = 0.f;
 }
 
+void Player::setVelocityY(const float velocity_y)
+{
+    this->velocity.y = velocity_y;
+}
+
+void Player::setVelocityX(const float velocity_x)
+{
+    this->velocity.x = velocity_x;
+}
+
+// Functions
 void Player::resetAnimationTimer()
 {
-	this->animationTimer.restart();
-	this->animationSwitch = true;
+    this->animationTimer.restart();
+    this->animationSwitch = true;
 }
 
 void Player::move(const float dir_x, const float dir_y)
 {
-	//Acceleration
-	this->velocity.x += dir_x * this->acceleration;
+    // Aceleración
+    this->velocity.x += dir_x * this->acceleration;
 
-	//Limit velocity
-	if (std::abs(this->velocity.x) > this->velocityMax)
-	{
-		this->velocity.x = this->velocityMax * ((this->velocity.x < 0.f) ? -1.f : 1.f);
-	}
+    // Si no estamos en escalera, caemos por gravedad
+    if (!this->isOnLadder)
+    {
+        // Limita la velocidad máxima de caída
+        if (this->velocity.y < this->velocityMaxY)
+            this->velocity.y += this->gravity;
+    }
+    else
+    {
+        // Si estamos en escalera, controlamos la velocidad vertical manualmente
+        this->velocity.y = dir_y * this->velocityMax;
+    }
+
+    // Limita la velocidad
+    if (std::abs(this->velocity.x) > this->velocityMax)
+    {
+        this->velocity.x = this->velocityMax * ((this->velocity.x < 0.f) ? -1.f : 1.f);
+    }
+}
+
+void Player::climb(const float dir_y)
+{
+    if (this->isOnLadder)
+    {
+        this->velocity.y = dir_y * this->velocityMax * 0.5f; // Velocidad de escalada más lenta
+    }
 }
 
 void Player::jump()
 {
-	this->velocity.y = -70.f;
-	this->canJump = false;
+    if (this->canJump && (this->isOnGround || this->isOnPlatform))
+    {
+        this->velocity.y = -16.f; // Ajusta la fuerza de salto según necesites
+        this->canJump = false;
+        this->isOnGround = false;
+        this->isOnPlatform = false;
+    }
 }
 
 void Player::updatePhysics()
 {
-	//Gravity
-	this->velocity.y += 1.0 * this->gravity;
+    // Aplicar gravedad (si no está en escalera)
+    if (!this->isOnLadder)
+    {
+        // Limita la velocidad máxima de caída
+        if (this->velocity.y < this->velocityMaxY)
+            this->velocity.y += this->gravity;
+    }
 
+    // Desaceleración
+    this->velocity.x *= this->drag;
 
-	//Deceleration
-	this->velocity *= this->drag;
+    // Si la velocidad es muy pequeña, la hacemos cero
+    if (std::abs(this->velocity.x) < this->velocityMin)
+        this->velocity.x = 0.f;
 
-	//Limit deceleration
-	if (std::abs(this->velocity.x) < this->velocityMin)
-		this->velocity.x = 0.0;
-	if (std::abs(this->velocity.y) < this->velocityMin)
-		this->velocity.y = 0.0;
-
-	if (std::abs(this->velocity.x) <= 1.f)
-		this->velocity.x = 0.0;
-
-	this->sprite.move(this->velocity);
+    // Movimiento
+    this->sprite.move(this->velocity.x, this->velocity.y);
 }
 
 void Player::updateMovement()
 {
-	if (this->velocity.x > 0.0)
-		this->animState = PLAYER_ANIMATION_STATES::MOVING_RIGHT;
-	else if (this->velocity.x < 0.0)
-		this->animState = PLAYER_ANIMATION_STATES::MOVING_LEFT;
-	else
-		this->animState = PLAYER_ANIMATION_STATES::IDLE;
+    // Actualizar el estado de animación basado en la velocidad
+    if (this->velocity.x < 0.f)
+        this->animState = PLAYER_ANIMATION_STATES::MOVING_LEFT;
+    else if (this->velocity.x > 0.f)
+        this->animState = PLAYER_ANIMATION_STATES::MOVING_RIGHT;
+    else
+        this->animState = PLAYER_ANIMATION_STATES::IDLE;
+
+    // Actualizar estado de salto/caída
+    if (this->velocity.y < 0.f)
+        this->animState = PLAYER_ANIMATION_STATES::JUMPING;
+    else if (this->velocity.y > 0.f && !this->isOnGround && !this->isOnPlatform)
+        this->animState = PLAYER_ANIMATION_STATES::FALLING;
+
+    // Si está en escalera
+    if (this->isOnLadder)
+        this->animState = PLAYER_ANIMATION_STATES::CLIMBING;
 }
 
 void Player::updateAnimations()
 {
-	float speedPercent = (abs(this->velocity.x) / this->velocityMax);
-	const float frameWidth = 223.f / 3;  // Ancho del sprite individual
-	const float frameHeight = 298.f / 2;
+    if (this->animationTimer.getElapsedTime().asSeconds() >= 0.1f) // Controla la velocidad de la animación
+    {
+        // Cambiar el frame actual basado en el estado de animación
+        switch (this->animState)
+        {
+        case PLAYER_ANIMATION_STATES::IDLE:
+            this->currentFrame.top = 0;
+            this->currentFrame.left += 32; // Ajusta según el tamaño real de tu sprite
 
-	if (this->animState == PLAYER_ANIMATION_STATES::IDLE)
-	{
-		this->currentFrame.left = 0.f;
-		this->currentFrame.top = 0.f;
-		this->currentFrame.width = frameWidth;
-		this->currentFrame.height = frameHeight;
-		this->sprite.setTextureRect(this->currentFrame);
-	}
-	else if (this->animState == PLAYER_ANIMATION_STATES::MOVING_RIGHT)
-	{
-		if (this->animationTimer.getElapsedTime().asMilliseconds() >= 90.f / speedPercent || this->getAnimSwitch())
-		{
-			// Caminar: Primera columna, primera fila
-   // De acuerdo a la imagen, parece que hay 3 frames en la primera columna
-			this->currentFrameIndex = (this->currentFrameIndex + 1) % 3;
+            if (this->currentFrame.left >= 128) // Ajusta según el número de frames de tu animación
+                this->currentFrame.left = 0;
 
-			// Calculamos la posición del frame actual en el spritesheet
-			this->currentFrame.left = this->currentFrameIndex * frameWidth;
-			this->currentFrame.top = 0.f; // Primera fila
-			this->currentFrame.width = frameWidth;
-			this->currentFrame.height = frameHeight;
+            break;
+        case PLAYER_ANIMATION_STATES::MOVING_LEFT:
+            this->currentFrame.top = 32; // Ajusta según la fila de tu sprite sheet
+            this->currentFrame.left += 32;
 
-			this->animationTimer.restart();
-			this->sprite.setTextureRect(this->currentFrame);
-		}
+            if (this->currentFrame.left >= 128)
+                this->currentFrame.left = 0;
 
-		this->sprite.setScale(3.f, 3.f);
-		this->sprite.setOrigin(0.f, 0.f);
-	}
-	else if (this->animState == PLAYER_ANIMATION_STATES::MOVING_LEFT)
-	{
-		if (this->animationTimer.getElapsedTime().asMilliseconds() >= 90.f / speedPercent || this->getAnimSwitch())
-		{
-			// Mismos frames que para moverse a la derecha
-			this->currentFrameIndex = (this->currentFrameIndex + 1) % 3;
+            // Voltear sprite hacia la izquierda
+            this->sprite.setScale(-2.f, 2.f);
+            break;
+        case PLAYER_ANIMATION_STATES::MOVING_RIGHT:
+            this->currentFrame.top = 32;
+            this->currentFrame.left += 32;
 
-			this->currentFrame.left = this->currentFrameIndex * frameWidth;
-			this->currentFrame.top = 0.f; // Primera fila
-			this->currentFrame.width = frameWidth;
-			this->currentFrame.height = frameHeight;
+            if (this->currentFrame.left >= 128)
+                this->currentFrame.left = 0;
 
-			this->animationTimer.restart();
-			this->sprite.setTextureRect(this->currentFrame);
-		}
+            // Mantener sprite mirando a la derecha
+            this->sprite.setScale(2.f, 2.f);
+            break;
+        case PLAYER_ANIMATION_STATES::JUMPING:
+            this->currentFrame.top = 64;
+            this->currentFrame.left = 0;
+            break;
+        case PLAYER_ANIMATION_STATES::FALLING:
+            this->currentFrame.top = 64;
+            this->currentFrame.left = 32;
+            break;
+        case PLAYER_ANIMATION_STATES::CLIMBING:
+            this->currentFrame.top = 96;
+            this->currentFrame.left += 32;
 
-		this->sprite.setScale(-3.f, 3.f);
-		this->sprite.setOrigin(this->sprite.getGlobalBounds().width / 3.f, 0.f);
-	}
-	else
-		this->animationTimer.restart();
+            if (this->currentFrame.left >= 128)
+                this->currentFrame.left = 0;
+
+            break;
+        default:
+            break;
+        }
+
+        // Actualizar el temporizador y aplicar el nuevo frame
+        this->animationTimer.restart();
+        this->sprite.setTextureRect(this->currentFrame);
+    }
 }
 
 void Player::update()
 {
-	this->updateMovement();
-	this->updateAnimations();
-	this->updatePhysics();
+    this->updateMovement();
+    this->updateAnimations();
+    this->updatePhysics();
 }
 
 void Player::render(sf::RenderTarget& target)
 {
-	target.draw(this->sprite);
-
-	sf::CircleShape circ;
-	circ.setFillColor(sf::Color::Red);
-	circ.setRadius(2.f);
-	circ.setPosition(this->sprite.getPosition());
-
-	target.draw(circ);
+    target.draw(this->sprite);
 }

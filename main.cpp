@@ -1,18 +1,33 @@
-#include "stdafx.h"
-#include "Game.h"
+#include "stdafx.h"  
+#include "Game.h"  
 
-int main()
-{
-	srand(static_cast<unsigned>(time(0)));
 
-	Game game;
 
-	while (game.getWindow().isOpen())
-	{
-		game.update();
-		game.render();
-	}
+int main()  
+{  
+   sf::RenderWindow window(sf::VideoMode(1280, 720), "Dead Paradise", sf::Style::Close | sf::Style::Titlebar | sf::Style::Resize);  
+   sf::Clock deltaClock;  
+   Renderer renderer(window);  
 
-	//End of application
-	return 0;
+   init(window);  
+   while (window.isOpen())  
+   {  
+       float deltaTime = deltaClock.restart().asSeconds();  
+
+       sf::Event ev{};  
+       while (window.pollEvent(ev))  
+       {  
+           if (ev.type == sf::Event::Closed)  
+               window.close();  
+           if (ev.type == sf::Event::KeyPressed && ev.key.code == sf::Keyboard::Escape)  
+               window.close();  
+       }  
+       window.setView(camera.getView(sf::Vector2f(window.getSize())));  
+       Update(deltaTime);  
+       window.clear();  
+       Render(renderer);  
+       window.display();  
+   }  
+
+   // Fin de la aplicación  
 }
