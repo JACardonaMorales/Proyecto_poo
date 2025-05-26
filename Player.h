@@ -1,6 +1,14 @@
 #pragma once
+#include <SFML/Graphics.hpp>
 
-enum PLAYER_ANIMATION_STATES { IDLE = 0, MOVING_LEFT, MOVING_RIGHT, JUMPING, FALLING, CLIMBING };
+enum PLAYER_ANIMATION_STATES {
+	IDLE = 0,
+	MOVING_LEFT,
+	MOVING_RIGHT,
+	JUMPING,
+	FALLING,
+	CLIMBING
+};
 
 class Player
 {
@@ -28,7 +36,6 @@ private:
 	bool isOnLadder;
 
 	//Core
-	
 	void initVariables();
 	void initTexture();
 	void initSprite();
@@ -40,6 +47,7 @@ public:
 	virtual ~Player();
 
 	void init();
+
 	//Accessors
 	const bool& getAnimSwitch();
 	const sf::Vector2f getPosition() const;

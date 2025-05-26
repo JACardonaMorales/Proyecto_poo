@@ -6,6 +6,7 @@
 #include "Map.h"
 #include "LevelEditor.h"
 #include "Physics.h"
+#include "Player.h"
 
 extern Camera camera;
 

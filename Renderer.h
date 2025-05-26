@@ -1,4 +1,5 @@
 #pragma once
+
 class Renderer
 {
 public:
@@ -7,7 +8,9 @@ public:
 	void Draw(const sf::Texture& texture, const sf::Vector2f& position, const sf::Vector2f& size);
 
 private:
-	sf::Sprite sprite{  };
+	sf::Sprite sprite;
 	sf::RenderTarget& target;
 };
+
+
 

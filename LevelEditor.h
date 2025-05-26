@@ -1,6 +1,5 @@
 #pragma once
-#include "Map.h"
-#include "Renderer.h"
+#include "Game.h"
 
 enum class TileType {
     EMPTY = 0,
@@ -54,7 +53,7 @@ public:
     static bool IsAnimatedTile(TileType type);
 
 private:
-    Map& mapRef;
+    Map* mapRef;
     float cellSize;
     bool editorMode;
     TileType selectedTileType;

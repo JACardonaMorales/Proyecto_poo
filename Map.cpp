@@ -1,7 +1,6 @@
 #include "stdafx.h"
+#include "Game.h"
 #include "Map.h"
-#include "Resources.h"
-#include "LevelEditor.h"
 
 Map::Map(float cellSize) : cellSize(cellSize)
 {
