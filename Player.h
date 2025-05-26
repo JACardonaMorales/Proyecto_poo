@@ -28,6 +28,7 @@ private:
 	bool isOnLadder;
 
 	//Core
+	
 	void initVariables();
 	void initTexture();
 	void initSprite();
@@ -38,6 +39,7 @@ public:
 	Player();
 	virtual ~Player();
 
+	void init();
 	//Accessors
 	const bool& getAnimSwitch();
 	const sf::Vector2f getPosition() const;

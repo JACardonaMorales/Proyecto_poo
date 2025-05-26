@@ -35,7 +35,7 @@ int main()
         window.setView(camera.getView(sf::Vector2f(window.getSize())));
 
         // Limpiar pantalla
-        window.clear(sf::Color(50, 50, 100)); // Fondo azul oscuro
+        window.clear(sf::Color(0, 0, 0)); // Fondo oscuro
 
         // Crear renderer y dibujar
         Renderer renderer(window);

@@ -4,6 +4,8 @@
 #include "Renderer.h"
 #include "Resources.h"
 #include "Map.h"
+#include "LevelEditor.h"
+#include "Physics.h"
 
 extern Camera camera;
 

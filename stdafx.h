@@ -11,5 +11,6 @@
 #include <SFML/System.hpp>
 #include <iostream>
 #include <box2d/box2d.h>
+#include <box2d/collision.h>
 #include <filesystem>
 

@@ -10,6 +10,8 @@ LevelEditor* levelEditor = nullptr;
 
 void init(const sf::Window& window)
 {
+	Physics::Init(); // Inicializar el mundo de Box2D
+
     // Inicializar el mapa con un tamaño por defecto
     gameMap.createBoard(100, 50);
 
@@ -22,6 +24,8 @@ void init(const sf::Window& window)
 
     std::cout << "Game initialized" << std::endl;
     std::cout << "Press E to toggle Level Editor" << std::endl;
+
+    player.init;
 }
 
 void HandleInput(const sf::Event& event, const sf::RenderWindow& window)
