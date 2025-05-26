@@ -1,12 +1,14 @@
 #pragma once
-#include"Player.h"
-#include"Camera.h"
+#include <SFML/Graphics.hpp>
+#include "Player.h"
+#include "Camera.h"
 #include "Renderer.h"
 #include "Resources.h"
 #include "Map.h"
-#include "LevelEditor.h"
 #include "Physics.h"
-#include "Player.h"
+
+// Forward declaration
+class LevelEditor;
 
 extern Camera camera;
 

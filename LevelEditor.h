@@ -1,81 +1,116 @@
 #pragma once
-#include "Game.h"
+#include <SFML/Graphics.hpp>
+#include <vector>
 
 enum class TileType {
     EMPTY = 0,
-    SOLID_BLOCK = 1,
-    SPIKE = 2,
-    DOOR = 3,
+    WALL = 1,
+    PLATFORM = 2,
+    SPIKES = 3,
     TORCH = 4,
-    PLATFORM = 5,  // Traspasable desde abajo
-    // Tileset blocks con diferentes orientaciones
-    BLOCK_TOP_LEFT = 6,
-    BLOCK_TOP = 7,
-    BLOCK_TOP_RIGHT = 8,
-    BLOCK_LEFT = 9,
-    BLOCK_CENTER = 10,
-    BLOCK_RIGHT = 11,
-    BLOCK_BOTTOM_LEFT = 12,
-    BLOCK_BOTTOM = 13,
-    BLOCK_BOTTOM_RIGHT = 14,
-    // Bloques con sombras
-    BLOCK_SHADOW_TOP = 15,
-    BLOCK_SHADOW_LEFT = 16,
-    BLOCK_SHADOW_RIGHT = 17,
-    BLOCK_SHADOW_BOTTOM = 18
+    DOOR = 5,
+    // Tileset blocks with different orientations
+    BLOCK_TOP_LEFT = 10,
+    BLOCK_TOP = 11,
+    BLOCK_TOP_RIGHT = 12,
+    BLOCK_LEFT = 13,
+    BLOCK_CENTER = 14,
+    BLOCK_RIGHT = 15,
+    BLOCK_BOTTOM_LEFT = 16,
+    BLOCK_BOTTOM = 17,
+    BLOCK_BOTTOM_RIGHT = 18,
+    // Shadow variations
+    BLOCK_SHADOW_LEFT = 20,
+    BLOCK_SHADOW_RIGHT = 21,
+    BLOCK_SHADOW_BOTTOM = 22,
+    BLOCK_SHADOW_CORNER = 23
 };
 
-class LevelEditor {
-public:
-    LevelEditor(Map& map, float cellSize = 32.0f);
+struct TileInfo {
+    TileType type;
+    bool hasCollision;
+    bool isAnimated;
+    sf::Vector2i textureCoord; // Coordinates in tileset
+    std::string textureName;
 
+    TileInfo(TileType t, bool collision, bool animated, sf::Vector2i coord, const std::string& texture)
+        : type(t), hasCollision(collision), isAnimated(animated), textureCoord(coord), textureName(texture) {
+    }
+};
+
+class LevelEditor
+{
+public:
+    LevelEditor();
+    ~LevelEditor();
+
+    void Initialize();
     void HandleInput(const sf::Event& event, const sf::RenderWindow& window);
     void Update(float deltaTime);
-    void Draw(Renderer& renderer);
-    void DrawUI(sf::RenderWindow& window);
+    void Render(sf::RenderWindow& window);
+    void RenderGrid(sf::RenderWindow& window);
+    void RenderUI(sf::RenderWindow& window);
 
-    void SetSelectedTile(TileType type);
+    // Tile management
+    void SetCurrentTile(TileType type);
+    void PlaceTile(int x, int y);
+    void RemoveTile(int x, int y);
+    TileType GetTileAt(int x, int y) const;
+    bool HasCollisionAt(int x, int y) const;
+
+    // File operations
     void SaveLevel(const std::string& filename);
     void LoadLevel(const std::string& filename);
-    void ClearLevel();
+    void ExportAsImage(const std::string& filename);
     void NewLevel(int width, int height);
 
-    bool IsEditorMode() const { return editorMode; }
-    void SetEditorMode(bool mode) { editorMode = mode; }
-
-    // Función para verificar si un tile es sólido para colisiones
-    static bool IsSolidTile(TileType type);
-    // Función para verificar si un tile es una plataforma (traspasable desde abajo)
-    static bool IsPlatformTile(TileType type);
-    // Función para verificar si un tile causa daño
-    static bool IsDamageTile(TileType type);
-    // Función para verificar si un tile es animado
-    static bool IsAnimatedTile(TileType type);
+    // Getters
+    const std::vector<std::vector<TileType>>& GetGrid() const { return grid; }
+    int GetGridWidth() const { return gridWidth; }
+    int GetGridHeight() const { return gridHeight; }
+    float GetTileSize() const { return tileSize; }
 
 private:
-    Map* mapRef;
-    float cellSize;
-    bool editorMode;
-    TileType selectedTileType;
-    bool isPlacing;
+    // Grid data
+    std::vector<std::vector<TileType>> grid;
+    int gridWidth;
+    int gridHeight;
+    float tileSize;
+
+    // Editor state
+    TileType currentTileType;
+    bool isActive;
+    bool showGrid;
+    bool isPainting;
     bool isErasing;
-    sf::Vector2i lastMouseGrid;
+
+    // Camera and view
+    sf::View editorView;
+    sf::Vector2f cameraPosition;
+    float zoomLevel;
 
     // UI elements
     sf::Font font;
-    sf::Text instructionText;
-    sf::RectangleShape tileSelector;
-    sf::Text tileTypeText;
-    sf::Text tileInfoText;
+    std::vector<sf::Text> tileButtons;
+    sf::RectangleShape selectedTileIndicator;
+    sf::Text infoText;
 
-    // Grid helper
-    sf::Vector2i ScreenToGrid(const sf::Vector2i& screenPos, const sf::RenderWindow& window);
-    sf::Vector2f GridToScreen(const sf::Vector2i& gridPos);
-    void PlaceTile(const sf::Vector2i& gridPos);
-    void EraseTile(const sf::Vector2i& gridPos);
-    void DrawGrid(Renderer& renderer, const sf::View& view);
-    void InitUI();
-    std::string TileTypeToString(TileType type);
-    void UpdateTileSelection();
-    void DrawTilePreview(Renderer& renderer);
+    // Tile information
+    std::vector<TileInfo> tileInfos;
+
+    // Animation
+    sf::Clock animationClock;
+    float torchAnimationTime;
+
+    // Helper functions
+    void InitializeTileInfos();
+    void LoadTextures();
+    sf::Vector2i GetGridPosition(const sf::Vector2f& worldPos) const;
+    sf::Vector2f GetWorldPosition(int gridX, int gridY) const;
+    void UpdateCamera();
+    void RenderTile(sf::RenderWindow& window, TileType type, const sf::Vector2f& position);
+    void RenderTorch(sf::RenderWindow& window, const sf::Vector2f& position, float animTime);
+    void SetupUI();
+    int GetTilesetIndex(TileType type) const;
+    sf::IntRect GetTilesetRect(TileType type) const;
 };

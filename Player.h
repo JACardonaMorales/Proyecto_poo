@@ -46,7 +46,6 @@ public:
 	Player();
 	virtual ~Player();
 
-	void init();
 
 	//Accessors
 	const bool& getAnimSwitch();

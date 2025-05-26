@@ -58,10 +58,6 @@ Player::~Player()
 {
 }
 
-void Player::init()
-{
-
-}
 
 // Accessors
 const bool& Player::getAnimSwitch()

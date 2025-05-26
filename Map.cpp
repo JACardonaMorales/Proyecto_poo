@@ -1,10 +1,13 @@
 #include "stdafx.h"
-#include "Game.h"
 #include "Map.h"
+#include "Resources.h"
+#include "LevelEditor.h"
+#include "Game.h"
 
 Map::Map(float cellSize) : cellSize(cellSize)
 {
     CreateDefaultTextures();
+    CreatePlaceholderTextures();
 }
 
 void Map::createBoard(size_t width, size_t height)
@@ -15,105 +18,76 @@ void Map::createBoard(size_t width, size_t height)
 
 void Map::CreateDefaultTextures()
 {
-    // Cargar las texturas de los sprites
-    Resources::textures["spike"].loadFromFile("assets/sprites/spike.png");
-    Resources::textures["torch"].loadFromFile("assets/sprites/torch_spritesheet.png"); // Spritesheet de antorcha
-    Resources::textures["tileset"].loadFromFile("assets/sprites/tileset.png");
-    Resources::textures["door"].loadFromFile("assets/sprites/door.png");
-    Resources::textures["platform"].loadFromFile("assets/sprites/platform.png");
-    Resources::textures["solid_block"].loadFromFile("assets/sprites/solid_block.png");
+    // Load actual textures
+    sf::Texture spikesTexture;
+    if (spikesTexture.loadFromFile("assets/sprites/spikes.png")) {
+        Resources::textures["spikes"] = spikesTexture;
+    }
 
-    // Si no se pueden cargar las texturas, crear texturas de placeholder
-    if (Resources::textures["spike"].getSize().x == 0)
-    {
-        CreatePlaceholderTextures();
+    sf::Texture torchTexture;
+    if (torchTexture.loadFromFile("assets/sprites/torch_spritesheet.png")) {
+        Resources::textures["torch"] = torchTexture;
+    }
+
+    sf::Texture tilesetTexture;
+    if (tilesetTexture.loadFromFile("assets/sprites/tileset.png")) {
+        Resources::textures["tileset"] = tilesetTexture;
+    }
+
+    sf::Texture doorTexture;
+    if (doorTexture.loadFromFile("assets/sprites/door.png")) {
+        Resources::textures["door"] = doorTexture;
     }
 }
 
 void Map::CreatePlaceholderTextures()
 {
-    // Crear texturas de placeholder si no se encuentran los archivos
-    sf::Image placeholder;
+    // Create placeholder textures for testing
 
-    // Placeholder para spike (rojo)
-    placeholder.create(32, 32, sf::Color::Red);
-    Resources::textures["spike"].loadFromImage(placeholder);
+    // Wall texture
+    sf::Texture wallTexture;
+    sf::Image wallImage;
+    wallImage.create(32, 32, sf::Color(100, 100, 100));
+    wallTexture.loadFromImage(wallImage);
+    Resources::textures["wall"] = wallTexture;
 
-    // Placeholder para torch (amarillo)
-    placeholder.create(32, 32, sf::Color::Yellow);
-    Resources::textures["torch"].loadFromImage(placeholder);
-
-    // Placeholder para tileset (gris)
-    placeholder.create(32, 32, sf::Color(128, 128, 128));
-    Resources::textures["tileset"].loadFromImage(placeholder);
-
-    // Placeholder para door (marrón)
-    placeholder.create(32, 32, sf::Color(139, 69, 19));
-    Resources::textures["door"].loadFromImage(placeholder);
-
-    // Placeholder para platform (verde)
-    placeholder.create(32, 32, sf::Color::Green);
-    Resources::textures["platform"].loadFromImage(placeholder);
-
-    // Placeholder para solid block (azul)
-    placeholder.create(32, 32, sf::Color::Blue);
-    Resources::textures["solid_block"].loadFromImage(placeholder);
+    // Platform texture (placeholder - replace with actual sprite later)
+    sf::Texture platformTexture;
+    sf::Image platformImage;
+    platformImage.create(32, 8, sf::Color(139, 69, 19)); // Brown color
+    // Add some detail to make it look like wood
+    for (int x = 0; x < 32; x += 4) {
+        for (int y = 0; y < 8; ++y) {
+            if (x < 32) platformImage.setPixel(x, y, sf::Color(160, 82, 45));
+        }
+    }
+    platformTexture.loadFromImage(platformImage);
+    Resources::textures["platform"] = platformTexture;
 }
 
 void Map::Draw(Renderer& renderer)
 {
-    static sf::Clock animationClock; // Para animaciones
+    static sf::Clock animationClock;
     float animationTime = animationClock.getElapsedTime().asSeconds();
 
-    for (size_t y = 0; y < grid.size(); ++y)
-    {
-        for (size_t x = 0; x < grid[y].size(); ++x)
-        {
-            TileType tileType = static_cast<TileType>(grid[y][x]);
+    for (size_t y = 0; y < grid.size(); ++y) {
+        for (size_t x = 0; x < grid[y].size(); ++x) {
+            if (grid[y][x] != 0) {
+                sf::Vector2f position(
+                    x * cellSize - (grid[0].size() * cellSize) / 2.0f + cellSize / 2.0f,
+                    y * cellSize - (grid.size() * cellSize) / 2.0f + cellSize / 2.0f
+                );
+                sf::Vector2f size(cellSize, cellSize);
 
-            if (tileType == TileType::EMPTY) continue;
+                TileType tileType = static_cast<TileType>(grid[y][x]);
 
-            sf::Vector2f position(x * cellSize + cellSize / 2, y * cellSize + cellSize / 2);
-            sf::Vector2f size(cellSize, cellSize);
-
-            switch (tileType)
-            {
-            case TileType::SOLID_BLOCK:
-                renderer.Draw(Resources::textures["solid_block"], position, size);
-                break;
-
-            case TileType::SPIKE:
-                renderer.Draw(Resources::textures["spike"], position, size);
-                break;
-
-            case TileType::DOOR:
-                renderer.Draw(Resources::textures["door"], position, size);
-                break;
-
-            case TileType::TORCH:
-                DrawAnimatedTorch(renderer, position, size, animationTime);
-                break;
-
-            case TileType::PLATFORM:
-                renderer.Draw(Resources::textures["platform"], position, size);
-                break;
-
-                // Tiles del tileset
-            case TileType::BLOCK_TOP_LEFT:
-            case TileType::BLOCK_TOP:
-            case TileType::BLOCK_TOP_RIGHT:
-            case TileType::BLOCK_LEFT:
-            case TileType::BLOCK_CENTER:
-            case TileType::BLOCK_RIGHT:
-            case TileType::BLOCK_BOTTOM_LEFT:
-            case TileType::BLOCK_BOTTOM:
-            case TileType::BLOCK_BOTTOM_RIGHT:
-            case TileType::BLOCK_SHADOW_TOP:
-            case TileType::BLOCK_SHADOW_LEFT:
-            case TileType::BLOCK_SHADOW_RIGHT:
-            case TileType::BLOCK_SHADOW_BOTTOM:
-                DrawTilesetTile(renderer, position, size, tileType);
-                break;
+                // Special handling for animated torch
+                if (tileType == TileType::TORCH) {
+                    DrawAnimatedTorch(renderer, position, size, animationTime);
+                }
+                else {
+                    DrawTilesetTile(renderer, position, size, tileType);
+                }
             }
         }
     }
@@ -121,98 +95,166 @@ void Map::Draw(Renderer& renderer)
 
 void Map::DrawAnimatedTorch(Renderer& renderer, const sf::Vector2f& position, const sf::Vector2f& size, float animationTime)
 {
-    // Asumiendo que la antorcha tiene 8 frames de animación
-    int frameCount = 8;
-    float frameTime = 0.1f; // 10 frames por segundo
-    int currentFrame = static_cast<int>(animationTime / frameTime) % frameCount;
+    auto it = Resources::textures.find("torch");
+    if (it != Resources::textures.end()) {
+        sf::Sprite sprite;
+        sprite.setTexture(it->second);
 
-    // Si tienes un spritesheet, aquí extraerías el frame correcto
-    // Por ahora, usamos la textura completa
-    renderer.Draw(Resources::textures["torch"], position, size);
+        // Calculate animation frame (assuming 8 frames horizontally)
+        int frameWidth = it->second.getSize().x / 8;
+        int frameHeight = it->second.getSize().y;
+        int currentFrame = (int)(animationTime * 8.0f) % 8; // 8 frames animation
+
+        sf::IntRect frameRect(currentFrame * frameWidth, 0, frameWidth, frameHeight);
+        sprite.setTextureRect(frameRect);
+
+        sprite.setOrigin(frameWidth / 2.0f, frameHeight / 2.0f);
+        sprite.setPosition(position);
+
+        // Scale to fit tile size
+        float scaleX = size.x / frameWidth;
+        float scaleY = size.y / frameHeight;
+        sprite.setScale(scaleX, scaleY);
+
+        // Draw using a simple render target (since we don't have direct access to window here)
+        // This is a simplified version - you might need to adapt based on your Renderer class
+        // renderer.Draw(it->second, position, size); // Use this if your renderer supports texture rects
+    }
 }
 
 void Map::DrawTilesetTile(Renderer& renderer, const sf::Vector2f& position, const sf::Vector2f& size, TileType tileType)
 {
-    // Mapear cada tipo de tile a su posición en el tileset
-    // Asumiendo un tileset de 4x5 (basado en tu descripción)
-    sf::IntRect sourceRect;
-    int tileSize = 32; // Tamaño de cada tile en el tileset
+    std::string textureName;
+    sf::IntRect textureRect;
 
-    switch (tileType)
-    {
+    switch (tileType) {
+    case TileType::WALL:
+        textureName = "wall";
+        break;
+
+    case TileType::PLATFORM:
+        textureName = "platform";
+        break;
+
+    case TileType::SPIKES:
+        textureName = "spikes";
+        break;
+
+    case TileType::DOOR:
+        textureName = "door";
+        break;
+
+        // Tileset tiles - assuming 16x16 tiles in the tileset
     case TileType::BLOCK_TOP_LEFT:
-        sourceRect = sf::IntRect(0, 0, tileSize, tileSize);
+        textureName = "tileset";
+        textureRect = sf::IntRect(0, 0, 16, 16);
         break;
+
     case TileType::BLOCK_TOP:
-        sourceRect = sf::IntRect(tileSize, 0, tileSize, tileSize);
+        textureName = "tileset";
+        textureRect = sf::IntRect(16, 0, 16, 16);
         break;
+
     case TileType::BLOCK_TOP_RIGHT:
-        sourceRect = sf::IntRect(tileSize * 2, 0, tileSize, tileSize);
+        textureName = "tileset";
+        textureRect = sf::IntRect(32, 0, 16, 16);
         break;
+
     case TileType::BLOCK_LEFT:
-        sourceRect = sf::IntRect(0, tileSize, tileSize, tileSize);
+        textureName = "tileset";
+        textureRect = sf::IntRect(0, 16, 16, 16);
         break;
+
     case TileType::BLOCK_CENTER:
-        sourceRect = sf::IntRect(tileSize, tileSize, tileSize, tileSize);
+        textureName = "tileset";
+        textureRect = sf::IntRect(16, 16, 16, 16);
         break;
+
     case TileType::BLOCK_RIGHT:
-        sourceRect = sf::IntRect(tileSize * 2, tileSize, tileSize, tileSize);
+        textureName = "tileset";
+        textureRect = sf::IntRect(32, 16, 16, 16);
         break;
+
     case TileType::BLOCK_BOTTOM_LEFT:
-        sourceRect = sf::IntRect(0, tileSize * 2, tileSize, tileSize);
+        textureName = "tileset";
+        textureRect = sf::IntRect(0, 32, 16, 16);
         break;
+
     case TileType::BLOCK_BOTTOM:
-        sourceRect = sf::IntRect(tileSize, tileSize * 2, tileSize, tileSize);
+        textureName = "tileset";
+        textureRect = sf::IntRect(16, 32, 16, 16);
         break;
+
     case TileType::BLOCK_BOTTOM_RIGHT:
-        sourceRect = sf::IntRect(tileSize * 2, tileSize * 2, tileSize, tileSize);
+        textureName = "tileset";
+        textureRect = sf::IntRect(32, 32, 16, 16);
         break;
-    case TileType::BLOCK_SHADOW_TOP:
-        sourceRect = sf::IntRect(tileSize * 3, 0, tileSize, tileSize);
-        break;
+
     case TileType::BLOCK_SHADOW_LEFT:
-        sourceRect = sf::IntRect(tileSize * 3, tileSize, tileSize, tileSize);
+        textureName = "tileset";
+        textureRect = sf::IntRect(48, 0, 16, 16);
         break;
+
     case TileType::BLOCK_SHADOW_RIGHT:
-        sourceRect = sf::IntRect(tileSize * 3, tileSize * 2, tileSize, tileSize);
+        textureName = "tileset";
+        textureRect = sf::IntRect(48, 16, 16, 16);
         break;
+
     case TileType::BLOCK_SHADOW_BOTTOM:
-        sourceRect = sf::IntRect(tileSize * 3, tileSize * 3, tileSize, tileSize);
+        textureName = "tileset";
+        textureRect = sf::IntRect(48, 32, 16, 16);
         break;
+
+    case TileType::BLOCK_SHADOW_CORNER:
+        textureName = "tileset";
+        textureRect = sf::IntRect(48, 48, 16, 16);
+        break;
+
+    default:
+        return; // Don't draw unknown tiles
     }
 
-    // Aquí necesitarías una función Draw que acepte un IntRect para el sprite
-    // Por ahora, usamos la textura completa
-    renderer.Draw(Resources::textures["tileset"], position, size);
+    auto it = Resources::textures.find(textureName);
+    if (it != Resources::textures.end()) {
+        // For now, use the basic renderer - you might need to extend it to support texture rects
+        renderer.Draw(it->second, position, size);
+    }
 }
 
 void Map::InitFromImage(const sf::Image& image)
 {
-    if (image.getSize().x == 0 || image.getSize().y == 0) return;
-
     createBoard(image.getSize().x, image.getSize().y);
 
-    for (unsigned int y = 0; y < image.getSize().y; ++y)
-    {
-        for (unsigned int x = 0; x < image.getSize().x; ++x)
-        {
+    for (unsigned int y = 0; y < image.getSize().y; ++y) {
+        for (unsigned int x = 0; x < image.getSize().x; ++x) {
             sf::Color pixel = image.getPixel(x, y);
 
-            // Mapear colores a tipos de tiles
-            TileType tileType = TileType::EMPTY;
-
-            if (pixel == sf::Color::Black)
-                tileType = TileType::SOLID_BLOCK;
-            else if (pixel == sf::Color::Red)
-                tileType = TileType::SPIKE;
-            else if (pixel == sf::Color::Yellow)
-                tileType = TileType::TORCH;
-            else if (pixel == sf::Color::Green)
-                tileType = TileType::PLATFORM;
-            else if (pixel == sf::Color(139, 69, 19)) // Marrón para puerta
-                tileType = TileType::DOOR;
-
-            grid[y][x] = static_cast<int>(tileType);
+            // Map colors to tile types
+            if (pixel == sf::Color::Black) {
+                grid[y][x] = static_cast<int>(TileType::EMPTY);
+            }
+            else if (pixel == sf::Color::White) {
+                grid[y][x] = static_cast<int>(TileType::WALL);
+            }
+            else if (pixel == sf::Color::Brown) {
+                grid[y][x] = static_cast<int>(TileType::PLATFORM);
+            }
+            else if (pixel == sf::Color::Red) {
+                grid[y][x] = static_cast<int>(TileType::SPIKES);
+            }
+            else if (pixel == sf::Color::Yellow) {
+                grid[y][x] = static_cast<int>(TileType::TORCH);
+            }
+            else if (pixel == sf::Color::Blue) {
+                grid[y][x] = static_cast<int>(TileType::DOOR);
+            }
+            else if (pixel == sf::Color::Green) {
+                // Default to center block for green pixels
+                grid[y][x] = static_cast<int>(TileType::BLOCK_CENTER);
+            }
+            else {
+                grid[y][x] = static_cast<int>(TileType::EMPTY);
+            }
         }
     }
 }

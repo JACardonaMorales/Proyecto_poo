@@ -12,7 +12,6 @@ Camera camera;
 void handlePlayerDamage(TileType damageSource);
 
 void init(const sf::Window& window) {
-    player.init();
     gameMap.createBoard(50, 30); // Crear un mapa de 50x30
 
     // Cargar nivel por defecto o crear uno nuevo
