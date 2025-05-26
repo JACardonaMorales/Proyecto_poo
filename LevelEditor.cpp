@@ -1,110 +1,115 @@
 #include "stdafx.h"
 #include "LevelEditor.h"
-#include "Game.h"
 #include "Resources.h"
-#include <fstream>
-#include <iostream>
+#include "Game.h"
 
 LevelEditor::LevelEditor(Map& map, float cellSize)
-    : mapRef(map), cellSize(cellSize), editorMode(false), selectedTileType(TileType::SOLID_BLOCK),
-    isPlacing(false), isErasing(false), lastMouseGrid(-1, -1)
+    : mapRef(map), cellSize(cellSize), editorMode(false),
+    selectedTileType(TileType::SOLID_BLOCK), isPlacing(false),
+    isErasing(false), lastMouseGrid(-1, -1)
 {
     InitUI();
 }
 
 void LevelEditor::InitUI()
 {
-    // Try to load a font (you might need to add a font file to your assets)
-    if (!font.loadFromFile("./assets/arial.ttf")) {
-        // If no font file, use default font
-        std::cout << "Warning: Could not load font file. Using default font." << std::endl;
-    }
+    // Cargar fuente (asume que tienes una fuente disponible)
+    // font.loadFromFile("assets/fonts/arial.ttf");
 
     instructionText.setFont(font);
     instructionText.setCharacterSize(16);
     instructionText.setFillColor(sf::Color::White);
-    instructionText.setString("Editor Mode:\n1-Solid 2-Spikes 3-Door\nLeft Click-Place Right Click-Erase\nE-Toggle Editor S-Save L-Load C-Clear N-New");
-
-    tileTypeText.setFont(font);
-    tileTypeText.setCharacterSize(18);
-    tileTypeText.setFillColor(sf::Color::Yellow);
+    instructionText.setString("Level Editor\n[1-9] Select Tile | [LMB] Place | [RMB] Erase | [C] Clear | [S] Save | [L] Load | [ESC] Exit");
+    instructionText.setPosition(10, 10);
 
     tileSelector.setSize(sf::Vector2f(200, 30));
-    tileSelector.setFillColor(sf::Color(0, 0, 0, 150));
-    tileSelector.setOutlineThickness(2);
+    tileSelector.setFillColor(sf::Color(0, 0, 0, 180));
     tileSelector.setOutlineColor(sf::Color::White);
+    tileSelector.setOutlineThickness(2);
+    tileSelector.setPosition(10, 100);
+
+    tileTypeText.setFont(font);
+    tileTypeText.setCharacterSize(14);
+    tileTypeText.setFillColor(sf::Color::White);
+    tileTypeText.setPosition(15, 105);
+
+    tileInfoText.setFont(font);
+    tileInfoText.setCharacterSize(12);
+    tileInfoText.setFillColor(sf::Color::Yellow);
+    tileInfoText.setPosition(15, 140);
 }
 
 void LevelEditor::HandleInput(const sf::Event& event, const sf::RenderWindow& window)
 {
-    if (event.type == sf::Event::KeyPressed) {
-        switch (event.key.code) {
-        case sf::Keyboard::E:
-            editorMode = !editorMode;
-            break;
-        case sf::Keyboard::Num1:
-            if (editorMode) SetSelectedTile(TileType::SOLID_BLOCK);
-            break;
-        case sf::Keyboard::Num2:
-            if (editorMode) SetSelectedTile(TileType::SPIKE);
-            break;
-        case sf::Keyboard::Num3:
-            if (editorMode) SetSelectedTile(TileType::DOOR);
-            break;
-        case sf::Keyboard::S:
-            if (editorMode) SaveLevel("level.dat");
-            break;
-        case sf::Keyboard::L:
-            if (editorMode) LoadLevel("level.dat");
-            break;
-        case sf::Keyboard::C:
-            if (editorMode) ClearLevel();
-            break;
-        case sf::Keyboard::N:
-            if (editorMode) NewLevel(100, 50);
-            break;
-        }
-    }
-
     if (!editorMode) return;
 
-    if (event.type == sf::Event::MouseButtonPressed) {
-        if (event.mouseButton.button == sf::Mouse::Left) {
-            isPlacing = true;
-            sf::Vector2i mousePos(event.mouseButton.x, event.mouseButton.y);
-            sf::Vector2i gridPos = ScreenToGrid(mousePos, window);
-            PlaceTile(gridPos);
-            lastMouseGrid = gridPos;
-        }
-        else if (event.mouseButton.button == sf::Mouse::Right) {
-            isErasing = true;
-            sf::Vector2i mousePos(event.mouseButton.x, event.mouseButton.y);
-            sf::Vector2i gridPos = ScreenToGrid(mousePos, window);
-            EraseTile(gridPos);
-            lastMouseGrid = gridPos;
+    if (event.type == sf::Event::KeyPressed)
+    {
+        switch (event.key.code)
+        {
+        case sf::Keyboard::Num1: SetSelectedTile(TileType::EMPTY); break;
+        case sf::Keyboard::Num2: SetSelectedTile(TileType::SOLID_BLOCK); break;
+        case sf::Keyboard::Num3: SetSelectedTile(TileType::SPIKE); break;
+        case sf::Keyboard::Num4: SetSelectedTile(TileType::DOOR); break;
+        case sf::Keyboard::Num5: SetSelectedTile(TileType::TORCH); break;
+        case sf::Keyboard::Num6: SetSelectedTile(TileType::PLATFORM); break;
+        case sf::Keyboard::Num7: SetSelectedTile(TileType::BLOCK_TOP_LEFT); break;
+        case sf::Keyboard::Num8: SetSelectedTile(TileType::BLOCK_TOP); break;
+        case sf::Keyboard::Num9: SetSelectedTile(TileType::BLOCK_TOP_RIGHT); break;
+        case sf::Keyboard::Q: SetSelectedTile(TileType::BLOCK_LEFT); break;
+        case sf::Keyboard::W: SetSelectedTile(TileType::BLOCK_CENTER); break;
+        case sf::Keyboard::E: SetSelectedTile(TileType::BLOCK_RIGHT); break;
+        case sf::Keyboard::A: SetSelectedTile(TileType::BLOCK_BOTTOM_LEFT); break;
+        case sf::Keyboard::S: SetSelectedTile(TileType::BLOCK_BOTTOM); break;
+        case sf::Keyboard::D: SetSelectedTile(TileType::BLOCK_BOTTOM_RIGHT); break;
+        case sf::Keyboard::Z: SetSelectedTile(TileType::BLOCK_SHADOW_TOP); break;
+        case sf::Keyboard::X: SetSelectedTile(TileType::BLOCK_SHADOW_LEFT); break;
+        case sf::Keyboard::C: SetSelectedTile(TileType::BLOCK_SHADOW_RIGHT); break;
+        case sf::Keyboard::V: SetSelectedTile(TileType::BLOCK_SHADOW_BOTTOM); break;
+        case sf::Keyboard::F5: SaveLevel("level.dat"); break;
+        case sf::Keyboard::F9: LoadLevel("level.dat"); break;
+        case sf::Keyboard::Delete: ClearLevel(); break;
+        case sf::Keyboard::Escape: SetEditorMode(false); break;
         }
     }
 
-    if (event.type == sf::Event::MouseButtonReleased) {
-        if (event.mouseButton.button == sf::Mouse::Left) {
-            isPlacing = false;
-        }
-        else if (event.mouseButton.button == sf::Mouse::Right) {
-            isErasing = false;
-        }
-    }
-
-    if (event.type == sf::Event::MouseMoved && (isPlacing || isErasing)) {
-        sf::Vector2i mousePos(event.mouseMove.x, event.mouseMove.y);
+    if (event.type == sf::Event::MouseButtonPressed)
+    {
+        sf::Vector2i mousePos = sf::Mouse::getPosition(window);
         sf::Vector2i gridPos = ScreenToGrid(mousePos, window);
 
-        if (gridPos != lastMouseGrid) {
-            if (isPlacing) {
+        if (event.mouseButton.button == sf::Mouse::Left)
+        {
+            isPlacing = true;
+            PlaceTile(gridPos);
+        }
+        else if (event.mouseButton.button == sf::Mouse::Right)
+        {
+            isErasing = true;
+            EraseTile(gridPos);
+        }
+        lastMouseGrid = gridPos;
+    }
+
+    if (event.type == sf::Event::MouseButtonReleased)
+    {
+        if (event.mouseButton.button == sf::Mouse::Left)
+            isPlacing = false;
+        else if (event.mouseButton.button == sf::Mouse::Right)
+            isErasing = false;
+    }
+
+    if (event.type == sf::Event::MouseMoved && (isPlacing || isErasing))
+    {
+        sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+        sf::Vector2i gridPos = ScreenToGrid(mousePos, window);
+
+        if (gridPos != lastMouseGrid)
+        {
+            if (isPlacing)
                 PlaceTile(gridPos);
-            }
-            else if (isErasing) {
+            else if (isErasing)
                 EraseTile(gridPos);
-            }
             lastMouseGrid = gridPos;
         }
     }
@@ -112,37 +117,100 @@ void LevelEditor::HandleInput(const sf::Event& event, const sf::RenderWindow& wi
 
 void LevelEditor::Update(float deltaTime)
 {
-    // Update UI text
+    if (!editorMode) return;
+
+    UpdateTileSelection();
+}
+
+void LevelEditor::UpdateTileSelection()
+{
     tileTypeText.setString("Selected: " + TileTypeToString(selectedTileType));
+
+    std::string info = "";
+    if (IsSolidTile(selectedTileType))
+        info += "Solid ";
+    if (IsPlatformTile(selectedTileType))
+        info += "Platform ";
+    if (IsDamageTile(selectedTileType))
+        info += "Damage ";
+    if (IsAnimatedTile(selectedTileType))
+        info += "Animated ";
+
+    tileInfoText.setString("Properties: " + info);
 }
 
 void LevelEditor::Draw(Renderer& renderer)
 {
     if (!editorMode) return;
 
-    // Draw grid overlay
-    DrawGrid(renderer, camera.getView(sf::Vector2f(800, 600))); // Using a reference window size
+    DrawGrid(renderer, camera.getView(sf::Vector2f(800, 600)));
+    DrawTilePreview(renderer);
 }
 
 void LevelEditor::DrawUI(sf::RenderWindow& window)
 {
     if (!editorMode) return;
 
-    sf::View originalView = window.getView();
-    window.setView(window.getDefaultView());
-
-    // Draw instruction text
-    instructionText.setPosition(10, 10);
     window.draw(instructionText);
-
-    // Draw tile selector
-    tileSelector.setPosition(10, window.getSize().y - 100);
     window.draw(tileSelector);
-
-    tileTypeText.setPosition(20, window.getSize().y - 90);
     window.draw(tileTypeText);
+    window.draw(tileInfoText);
+}
 
-    window.setView(originalView);
+void LevelEditor::DrawGrid(Renderer& renderer, const sf::View& view)
+{
+    // Implementar dibujado de grid basado en la vista de la cámara
+    sf::Vector2f viewCenter = view.getCenter();
+    sf::Vector2f viewSize = view.getSize();
+
+    // Calcular los límites visibles del grid
+    int startX = static_cast<int>((viewCenter.x - viewSize.x / 2) / cellSize);
+    int endX = static_cast<int>((viewCenter.x + viewSize.x / 2) / cellSize) + 1;
+    int startY = static_cast<int>((viewCenter.y - viewSize.y / 2) / cellSize);
+    int endY = static_cast<int>((viewCenter.y + viewSize.y / 2) / cellSize) + 1;
+
+    // Asegurar que están dentro de los límites del mapa
+    startX = std::max(0, startX);
+    endX = std::min(static_cast<int>(mapRef.grid[0].size()), endX);
+    startY = std::max(0, startY);
+    endY = std::min(static_cast<int>(mapRef.grid.size()), endY);
+
+    // Dibujar líneas del grid (esto requeriría una implementación específica en tu renderer)
+}
+
+void LevelEditor::DrawTilePreview(Renderer& renderer)
+{
+    // Mostrar preview del tile seleccionado en la posición del mouse
+    // Esto requeriría obtener la posición del mouse en coordenadas del mundo
+}
+
+sf::Vector2i LevelEditor::ScreenToGrid(const sf::Vector2i& screenPos, const sf::RenderWindow& window)
+{
+    sf::Vector2f worldPos = window.mapPixelToCoords(screenPos, camera.getView(sf::Vector2f(window.getSize())));
+    return sf::Vector2i(static_cast<int>(worldPos.x / cellSize), static_cast<int>(worldPos.y / cellSize));
+}
+
+sf::Vector2f LevelEditor::GridToScreen(const sf::Vector2i& gridPos)
+{
+    return sf::Vector2f(gridPos.x * cellSize + cellSize / 2, gridPos.y * cellSize + cellSize / 2);
+}
+
+void LevelEditor::PlaceTile(const sf::Vector2i& gridPos)
+{
+    if (gridPos.x >= 0 && gridPos.x < static_cast<int>(mapRef.grid[0].size()) &&
+        gridPos.y >= 0 && gridPos.y < static_cast<int>(mapRef.grid.size()))
+    {
+        mapRef.grid[gridPos.y][gridPos.x] = static_cast<int>(selectedTileType);
+    }
+}
+
+void LevelEditor::EraseTile(const sf::Vector2i& gridPos)
+{
+    if (gridPos.x >= 0 && gridPos.x < static_cast<int>(mapRef.grid[0].size()) &&
+        gridPos.y >= 0 && gridPos.y < static_cast<int>(mapRef.grid.size()))
+    {
+        mapRef.grid[gridPos.y][gridPos.x] = static_cast<int>(TileType::EMPTY);
+    }
 }
 
 void LevelEditor::SetSelectedTile(TileType type)
@@ -150,149 +218,127 @@ void LevelEditor::SetSelectedTile(TileType type)
     selectedTileType = type;
 }
 
-sf::Vector2i LevelEditor::ScreenToGrid(const sf::Vector2i& screenPos, const sf::RenderWindow& window)
+std::string LevelEditor::TileTypeToString(TileType type)
 {
-    // Convertir coordenadas de pantalla a coordenadas del mundo
-    sf::Vector2f worldPos = window.mapPixelToCoords(screenPos);
-
-    // Convertir coordenadas del mundo a coordenadas de grid
-    return sf::Vector2i(
-        static_cast<int>(std::floor(worldPos.x / cellSize)),
-        static_cast<int>(std::floor(worldPos.y / cellSize))
-    );
-}
-
-sf::Vector2f LevelEditor::GridToScreen(const sf::Vector2i& gridPos)
-{
-    return sf::Vector2f(
-        gridPos.x * cellSize + cellSize / 2.0f,
-        gridPos.y * cellSize + cellSize / 2.0f
-    );
-}
-
-void LevelEditor::PlaceTile(const sf::Vector2i& gridPos)
-{
-    if (gridPos.x >= 0 && gridPos.y >= 0 &&
-        gridPos.x < static_cast<int>(mapRef.grid.size()) &&
-        gridPos.y < static_cast<int>(mapRef.grid[0].size())) {
-        mapRef.grid[gridPos.x][gridPos.y] = static_cast<int>(selectedTileType);
+    switch (type)
+    {
+    case TileType::EMPTY: return "Empty";
+    case TileType::SOLID_BLOCK: return "Solid Block";
+    case TileType::SPIKE: return "Spike";
+    case TileType::DOOR: return "Door";
+    case TileType::TORCH: return "Torch";
+    case TileType::PLATFORM: return "Platform";
+    case TileType::BLOCK_TOP_LEFT: return "Block Top-Left";
+    case TileType::BLOCK_TOP: return "Block Top";
+    case TileType::BLOCK_TOP_RIGHT: return "Block Top-Right";
+    case TileType::BLOCK_LEFT: return "Block Left";
+    case TileType::BLOCK_CENTER: return "Block Center";
+    case TileType::BLOCK_RIGHT: return "Block Right";
+    case TileType::BLOCK_BOTTOM_LEFT: return "Block Bottom-Left";
+    case TileType::BLOCK_BOTTOM: return "Block Bottom";
+    case TileType::BLOCK_BOTTOM_RIGHT: return "Block Bottom-Right";
+    case TileType::BLOCK_SHADOW_TOP: return "Shadow Top";
+    case TileType::BLOCK_SHADOW_LEFT: return "Shadow Left";
+    case TileType::BLOCK_SHADOW_RIGHT: return "Shadow Right";
+    case TileType::BLOCK_SHADOW_BOTTOM: return "Shadow Bottom";
+    default: return "Unknown";
     }
 }
 
-void LevelEditor::EraseTile(const sf::Vector2i& gridPos)
+// Funciones estáticas para determinar propiedades de los tiles
+bool LevelEditor::IsSolidTile(TileType type)
 {
-    if (gridPos.x >= 0 && gridPos.y >= 0 &&
-        gridPos.x < static_cast<int>(mapRef.grid.size()) &&
-        gridPos.y < static_cast<int>(mapRef.grid[0].size())) {
-        mapRef.grid[gridPos.x][gridPos.y] = static_cast<int>(TileType::EMPTY);
+    switch (type)
+    {
+    case TileType::SOLID_BLOCK:
+    case TileType::BLOCK_TOP_LEFT:
+    case TileType::BLOCK_TOP:
+    case TileType::BLOCK_TOP_RIGHT:
+    case TileType::BLOCK_LEFT:
+    case TileType::BLOCK_CENTER:
+    case TileType::BLOCK_RIGHT:
+    case TileType::BLOCK_BOTTOM_LEFT:
+    case TileType::BLOCK_BOTTOM:
+    case TileType::BLOCK_BOTTOM_RIGHT:
+    case TileType::DOOR: // La puerta puede ser sólida dependiendo del estado
+        return true;
+    default:
+        return false;
     }
 }
 
-void LevelEditor::DrawGrid(Renderer& renderer, const sf::View& view)
+bool LevelEditor::IsPlatformTile(TileType type)
 {
-    // Para dibujar la cuadrícula, necesitaríamos crear líneas
-    // Por ahora podemos dibujar un marco alrededor de cada celda visible
+    return type == TileType::PLATFORM;
+}
 
-    // Calcular el área visible
-    sf::Vector2f center = view.getCenter();
-    sf::Vector2f size = view.getSize();
+bool LevelEditor::IsDamageTile(TileType type)
+{
+    return type == TileType::SPIKE;
+}
 
-    sf::Vector2f topLeft = center - size / 2.0f;
-    sf::Vector2f bottomRight = center + size / 2.0f;
-
-    // Calcular las celdas visibles
-    int startX = std::max(0, static_cast<int>(std::floor(topLeft.x / cellSize)));
-    int endX = std::min(static_cast<int>(mapRef.grid.size()),
-        static_cast<int>(std::ceil(bottomRight.x / cellSize)));
-    int startY = std::max(0, static_cast<int>(std::floor(topLeft.y / cellSize)));
-    int endY = std::min(static_cast<int>(mapRef.grid.size() > 0 ? mapRef.grid[0].size() : 0),
-        static_cast<int>(std::ceil(bottomRight.y / cellSize)));
-
-    // Esta parte requeriría una implementación de líneas en el renderer
-    // Por simplicidad, la omitimos por ahora
+bool LevelEditor::IsAnimatedTile(TileType type)
+{
+    switch (type)
+    {
+    case TileType::TORCH:
+    case TileType::DOOR:
+        return true;
+    default:
+        return false;
+    }
 }
 
 void LevelEditor::SaveLevel(const std::string& filename)
 {
+    // Implementar guardado de nivel
     std::ofstream file(filename, std::ios::binary);
-    if (!file.is_open()) {
-        std::cout << "Error: Could not save level to " << filename << std::endl;
-        return;
-    }
+    if (file.is_open())
+    {
+        size_t height = mapRef.grid.size();
+        size_t width = mapRef.grid[0].size();
 
-    // Save dimensions
-    size_t width = mapRef.grid.size();
-    size_t height = width > 0 ? mapRef.grid[0].size() : 0;
+        file.write(reinterpret_cast<const char*>(&width), sizeof(width));
+        file.write(reinterpret_cast<const char*>(&height), sizeof(height));
 
-    file.write(reinterpret_cast<const char*>(&width), sizeof(width));
-    file.write(reinterpret_cast<const char*>(&height), sizeof(height));
-
-    // Save grid data
-    for (size_t x = 0; x < width; ++x) {
-        for (size_t y = 0; y < height; ++y) {
-            int tileValue = mapRef.grid[x][y];
-            file.write(reinterpret_cast<const char*>(&tileValue), sizeof(tileValue));
+        for (const auto& row : mapRef.grid)
+        {
+            file.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(int));
         }
+        file.close();
     }
-
-    file.close();
-    std::cout << "Level saved to " << filename << std::endl;
 }
 
 void LevelEditor::LoadLevel(const std::string& filename)
 {
+    // Implementar carga de nivel
     std::ifstream file(filename, std::ios::binary);
-    if (!file.is_open()) {
-        std::cout << "Error: Could not load level from " << filename << std::endl;
-        return;
-    }
+    if (file.is_open())
+    {
+        size_t width, height;
+        file.read(reinterpret_cast<char*>(&width), sizeof(width));
+        file.read(reinterpret_cast<char*>(&height), sizeof(height));
 
-    // Load dimensions
-    size_t width, height;
-    file.read(reinterpret_cast<char*>(&width), sizeof(width));
-    file.read(reinterpret_cast<char*>(&height), sizeof(height));
+        mapRef.createBoard(width, height);
 
-    // Resize grid
-    mapRef.grid.clear();
-    mapRef.grid.resize(width, std::vector<int>(height, 0));
-
-    // Load grid data
-    for (size_t x = 0; x < width; ++x) {
-        for (size_t y = 0; y < height; ++y) {
-            int tileValue;
-            file.read(reinterpret_cast<char*>(&tileValue), sizeof(tileValue));
-            mapRef.grid[x][y] = tileValue;
+        for (auto& row : mapRef.grid)
+        {
+            file.read(reinterpret_cast<char*>(row.data()), row.size() * sizeof(int));
         }
+        file.close();
     }
-
-    file.close();
-    std::cout << "Level loaded from " << filename << std::endl;
 }
 
 void LevelEditor::ClearLevel()
 {
-    for (auto& column : mapRef.grid) {
-        for (auto& cell : column) {
-            cell = static_cast<int>(TileType::EMPTY);
-        }
+    for (auto& row : mapRef.grid)
+    {
+        std::fill(row.begin(), row.end(), static_cast<int>(TileType::EMPTY));
     }
-    std::cout << "Level cleared" << std::endl;
 }
 
 void LevelEditor::NewLevel(int width, int height)
 {
-    mapRef.grid.clear();
-    mapRef.grid.resize(width, std::vector<int>(height, static_cast<int>(TileType::EMPTY)));
-    std::cout << "New level created: " << width << "x" << height << std::endl;
-}
-
-std::string LevelEditor::TileTypeToString(TileType type)
-{
-    switch (type) {
-    case TileType::EMPTY: return "Empty";
-    case TileType::SOLID_BLOCK: return "Tile";
-    case TileType::SPIKE: return "Spike";
-    case TileType::DOOR: return "Door";
-    default: return "Unknown";
-    }
+    mapRef.createBoard(width, height);
+    ClearLevel();
 }

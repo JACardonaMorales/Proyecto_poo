@@ -1,127 +1,163 @@
+// Ejemplo de integración en Game.cpp
+
 #include "stdafx.h"
 #include "Game.h"
-#include "LevelEditor.h"
+#include "Physics.h"
 
 // Variables globales
-Camera camera(10.0f);
 Player player;
-Map gameMap(32.0f);
-LevelEditor* levelEditor = nullptr;
+Map gameMap;
+LevelEditor levelEditor(gameMap);
+Camera camera;
+void handlePlayerDamage(TileType damageSource);
 
-void init(const sf::Window& window)
-{
-	Physics::Init(); // Inicializar el mundo de Box2D
+void init(const sf::Window& window) {
+    player.init();
+    gameMap.createBoard(50, 30); // Crear un mapa de 50x30
 
-    // Inicializar el mapa con un tamaño por defecto
-    gameMap.createBoard(100, 50);
-
-    // Crear el editor de niveles
-    levelEditor = new LevelEditor(gameMap, 32.0f);
-
-    // Cargar recursos si es necesario
-    // Resources::textures["player"].loadFromFile("assets/player.png");
-    // etc...
-
-    std::cout << "Game initialized" << std::endl;
-    std::cout << "Press E to toggle Level Editor" << std::endl;
-
-    player.init;
+    // Cargar nivel por defecto o crear uno nuevo
+    // gameMap.InitFromImage(someImage);
 }
 
-void HandleInput(const sf::Event& event, const sf::RenderWindow& window)
-{
-    // El editor maneja su propia entrada
-    if (levelEditor) {
-        levelEditor->HandleInput(event, window);
+void HandleInput(const sf::Event& event, const sf::RenderWindow& window) {
+    // Manejar input del editor de niveles
+    levelEditor.HandleInput(event, window);
+
+    // Si estamos en modo editor, no procesar input del jugador
+    if (levelEditor.IsEditorMode()) {
+        return;
     }
 
-    // Solo procesar entrada del juego si no estamos en modo editor
-    if (!levelEditor || !levelEditor->IsEditorMode()) {
-        // Aquí irían los controles del jugador
-        if (event.type == sf::Event::KeyPressed) {
-            switch (event.key.code) {
-            case sf::Keyboard::W:
-                // Mover jugador hacia arriba
-                break;
-            case sf::Keyboard::S:
-                // Mover jugador hacia abajo
-                break;
-            case sf::Keyboard::A:
-                // Mover jugador hacia la izquierda
-                break;
-            case sf::Keyboard::D:
-                // Mover jugador hacia la derecha
-                break;
-            }
-        }
-    }
-
-    // Controles de cámara (funcionan siempre)
+    // Input del jugador
     if (event.type == sf::Event::KeyPressed) {
         switch (event.key.code) {
-        case sf::Keyboard::Up:
-            camera.position.y -= 32.0f;
+        case sf::Keyboard::F1:
+            levelEditor.SetEditorMode(true);
             break;
-        case sf::Keyboard::Down:
-            camera.position.y += 32.0f;
-            break;
-        case sf::Keyboard::Left:
-            camera.position.x -= 32.0f;
-            break;
-        case sf::Keyboard::Right:
-            camera.position.x += 32.0f;
-            break;
-        case sf::Keyboard::Z:
-            camera.zoomLevel *= 0.9f; // Zoom in
-            break;
-        case sf::Keyboard::X:
-            camera.zoomLevel *= 1.1f; // Zoom out
+        case sf::Keyboard::R:
+            // Reiniciar jugador
+            player.setPosition(100, 100);
             break;
         }
     }
 }
 
-void Update(float deltaTime)
-{
-    // Actualizar el editor
-    if (levelEditor) {
-        levelEditor->Update(deltaTime);
+void Update(float deltaTime) {
+    if (levelEditor.IsEditorMode()) {
+        levelEditor.Update(deltaTime);
+        return;
     }
 
-    // Solo actualizar lógica del juego si no estamos en modo editor
-    if (!levelEditor || !levelEditor->IsEditorMode()) {
-        // Aquí iría la lógica de actualización del juego
-        // player.Update(deltaTime);
-        // Física, colisiones, etc.
+    // Actualizar jugador
+    player.update();
+
+    // Verificar colisiones
+    CollisionInfo collision = Physics::CheckCollision(player, gameMap);
+
+    if (collision.hasCollision) {
+        // Aplicar corrección de posición
+        sf::Vector2f currentPos = player.getPosition();
+        player.setPosition(currentPos.x + collision.correctionVector.x,
+            currentPos.y + collision.correctionVector.y);
+
+        // Actualizar estados del jugador basado en la colisión
+        player.setIsOnGround(collision.isGrounded);
+        player.setIsOnPlatform(collision.isOnPlatform);
+        player.setIsOnLadder(collision.isOnLadder);
+
+        // Si hay corrección vertical, resetear velocidad Y
+        if (collision.correctionVector.y != 0) {
+            player.resetVelocityY();
+        }
     }
+    else {
+        // No hay colisión, el jugador no está en el suelo
+        player.setIsOnGround(false);
+        player.setIsOnPlatform(false);
+        player.setIsOnLadder(false);
+    }
+
+    // Verificar daño
+    if (collision.takeDamage) {
+        // Implementar lógica de daño
+        handlePlayerDamage(collision.tileType);
+    }
+
+    // Actualizar cámara para seguir al jugador
+    camera.position = player.getPosition();
 }
 
-void Render(Renderer& renderer)
-{
-    // Dibujar el mapa
+void Render(Renderer& renderer) {
+    // Dibujar mapa
     gameMap.Draw(renderer);
 
-    // Solo dibujar elementos del juego si no estamos en modo editor
-    if (!levelEditor || !levelEditor->IsEditorMode()) {
-        // Dibujar jugador y otros elementos del juego
-        // player.Draw(renderer);
-    }
+    // Dibujar jugador
+    // renderer.Draw(...) // Implementar según tu sistema de renderizado
 
-    // Dibujar overlay del editor (grid, etc.)
-    if (levelEditor) {
-        levelEditor->Draw(renderer);
+    // Dibujar editor si está activo
+    if (levelEditor.IsEditorMode()) {
+        levelEditor.Draw(renderer);
     }
 }
 
-void RenderUI(sf::RenderWindow& window)
-{
-    // Dibujar UI del editor
-    if (levelEditor) {
-        levelEditor->DrawUI(window);
+void RenderUI(sf::RenderWindow& window) {
+    if (levelEditor.IsEditorMode()) {
+        levelEditor.DrawUI(window);
     }
 
-    // Dibujar otra UI del juego si es necesario
-    if (!levelEditor || !levelEditor->IsEditorMode()) {
-        // UI del juego normal (HUD, etc.)
+    // Dibujar UI del juego (vida, puntuación, etc.)
+    // ...
+}
+
+void handlePlayerDamage(TileType damageSource) {
+    switch (damageSource) {
+    case TileType::SPIKE:
+        // Lógica específica para daño de pinchos
+        std::cout << "Player hit spikes!" << std::endl;
+        // Reducir vida, reiniciar posición, etc.
+        break;
+    default:
+        break;
+    }
+}
+
+// Funciones de utilidad adicionales
+void SaveCurrentLevel() {
+    levelEditor.SaveLevel("current_level.dat");
+}
+
+void LoadLevel(const std::string& filename) {
+    levelEditor.LoadLevel(filename);
+}
+
+void CreateTestLevel() {
+    // Crear un nivel de prueba con diferentes tipos de tiles
+    gameMap.createBoard(20, 15);
+    levelEditor.ClearLevel();
+
+    // Agregar algunos tiles de ejemplo
+    gameMap.grid[10][5] = static_cast<int>(TileType::SOLID_BLOCK);
+    gameMap.grid[10][6] = static_cast<int>(TileType::PLATFORM);
+    gameMap.grid[9][7] = static_cast<int>(TileType::SPIKE);
+    gameMap.grid[8][8] = static_cast<int>(TileType::TORCH);
+    gameMap.grid[10][10] = static_cast<int>(TileType::DOOR);
+
+    // Crear una pequeña estructura con el tileset
+    for (int x = 12; x < 15; x++) {
+        for (int y = 8; y < 11; y++) {
+            TileType tileType = TileType::BLOCK_CENTER;
+
+            // Esquinas y bordes
+            if (x == 12 && y == 8) tileType = TileType::BLOCK_TOP_LEFT;
+            else if (x == 14 && y == 8) tileType = TileType::BLOCK_TOP_RIGHT;
+            else if (x == 12 && y == 10) tileType = TileType::BLOCK_BOTTOM_LEFT;
+            else if (x == 14 && y == 10) tileType = TileType::BLOCK_BOTTOM_RIGHT;
+            else if (y == 8) tileType = TileType::BLOCK_TOP;
+            else if (y == 10) tileType = TileType::BLOCK_BOTTOM;
+            else if (x == 12) tileType = TileType::BLOCK_LEFT;
+            else if (x == 14) tileType = TileType::BLOCK_RIGHT;
+
+            gameMap.grid[y][x] = static_cast<int>(tileType);
+        }
     }
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "Renderer.h"
+#include "LevelEditor.h"
 
 class Map
 {
@@ -14,7 +15,7 @@ public:
 
 private:
 	void CreateDefaultTextures();
+	void CreatePlaceholderTextures();
+	void DrawAnimatedTorch(Renderer& renderer, const sf::Vector2f& position, const sf::Vector2f& size, float animationTime);
+	void DrawTilesetTile(Renderer& renderer, const sf::Vector2f& position, const sf::Vector2f& size, TileType tileType);
 };
-
-
-

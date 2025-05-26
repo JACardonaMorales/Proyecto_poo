@@ -13,4 +13,7 @@
 #include <box2d/box2d.h>
 #include <box2d/collision.h>
 #include <filesystem>
+#include <box2d/base.h>
+#include <box2d/id.h>
+#include <box2d/types.h>
 
