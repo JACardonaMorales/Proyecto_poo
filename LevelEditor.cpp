@@ -61,7 +61,7 @@ void LevelEditor::HandleInput(const sf::Event& event, const sf::RenderWindow& wi
             if (editorMode) ClearLevel();
             break;
         case sf::Keyboard::N:
-            if (editorMode) NewLevel(50, 50);
+            if (editorMode) NewLevel(100, 50);
             break;
         }
     }
@@ -72,14 +72,14 @@ void LevelEditor::HandleInput(const sf::Event& event, const sf::RenderWindow& wi
         if (event.mouseButton.button == sf::Mouse::Left) {
             isPlacing = true;
             sf::Vector2i mousePos(event.mouseButton.x, event.mouseButton.y);
-            sf::Vector2i gridPos = ScreenToGrid(mousePos, window.getView());
+            sf::Vector2i gridPos = ScreenToGrid(mousePos, window);
             PlaceTile(gridPos);
             lastMouseGrid = gridPos;
         }
         else if (event.mouseButton.button == sf::Mouse::Right) {
             isErasing = true;
             sf::Vector2i mousePos(event.mouseButton.x, event.mouseButton.y);
-            sf::Vector2i gridPos = ScreenToGrid(mousePos, window.getView());
+            sf::Vector2i gridPos = ScreenToGrid(mousePos, window);
             EraseTile(gridPos);
             lastMouseGrid = gridPos;
         }
@@ -96,7 +96,7 @@ void LevelEditor::HandleInput(const sf::Event& event, const sf::RenderWindow& wi
 
     if (event.type == sf::Event::MouseMoved && (isPlacing || isErasing)) {
         sf::Vector2i mousePos(event.mouseMove.x, event.mouseMove.y);
-        sf::Vector2i gridPos = ScreenToGrid(mousePos, window.getView());
+        sf::Vector2i gridPos = ScreenToGrid(mousePos, window);
 
         if (gridPos != lastMouseGrid) {
             if (isPlacing) {
@@ -121,7 +121,7 @@ void LevelEditor::Draw(Renderer& renderer)
     if (!editorMode) return;
 
     // Draw grid overlay
-    DrawGrid(renderer, camera.getView({ 800, 600 })); // Assuming window size
+    DrawGrid(renderer, camera.getView(sf::Vector2f(800, 600))); // Using a reference window size
 }
 
 void LevelEditor::DrawUI(sf::RenderWindow& window)
@@ -150,15 +150,15 @@ void LevelEditor::SetSelectedTile(TileType type)
     selectedTileType = type;
 }
 
-sf::Vector2i LevelEditor::ScreenToGrid(const sf::Vector2i& screenPos, const sf::View& view)
+sf::Vector2i LevelEditor::ScreenToGrid(const sf::Vector2i& screenPos, const sf::RenderWindow& window)
 {
-    sf::Vector2f worldPos = view.getCenter() - view.getSize() / 2.0f;
-    worldPos.x += (screenPos.x / 800.0f) * view.getSize().x;
-    worldPos.y += (screenPos.y / 600.0f) * view.getSize().y;
+    // Convertir coordenadas de pantalla a coordenadas del mundo
+    sf::Vector2f worldPos = window.mapPixelToCoords(screenPos);
 
+    // Convertir coordenadas del mundo a coordenadas de grid
     return sf::Vector2i(
-        static_cast<int>(worldPos.x / cellSize),
-        static_cast<int>(worldPos.y / cellSize)
+        static_cast<int>(std::floor(worldPos.x / cellSize)),
+        static_cast<int>(std::floor(worldPos.y / cellSize))
     );
 }
 
@@ -190,9 +190,26 @@ void LevelEditor::EraseTile(const sf::Vector2i& gridPos)
 
 void LevelEditor::DrawGrid(Renderer& renderer, const sf::View& view)
 {
-    // This would require modifying the renderer to support line drawing
-    // For now, we'll skip the grid visualization
-    // You could implement this by drawing thin rectangles or using sf::Vertex arrays
+    // Para dibujar la cuadrícula, necesitaríamos crear líneas
+    // Por ahora podemos dibujar un marco alrededor de cada celda visible
+
+    // Calcular el área visible
+    sf::Vector2f center = view.getCenter();
+    sf::Vector2f size = view.getSize();
+
+    sf::Vector2f topLeft = center - size / 2.0f;
+    sf::Vector2f bottomRight = center + size / 2.0f;
+
+    // Calcular las celdas visibles
+    int startX = std::max(0, static_cast<int>(std::floor(topLeft.x / cellSize)));
+    int endX = std::min(static_cast<int>(mapRef.grid.size()),
+        static_cast<int>(std::ceil(bottomRight.x / cellSize)));
+    int startY = std::max(0, static_cast<int>(std::floor(topLeft.y / cellSize)));
+    int endY = std::min(static_cast<int>(mapRef.grid.size() > 0 ? mapRef.grid[0].size() : 0),
+        static_cast<int>(std::ceil(bottomRight.y / cellSize)));
+
+    // Esta parte requeriría una implementación de líneas en el renderer
+    // Por simplicidad, la omitimos por ahora
 }
 
 void LevelEditor::SaveLevel(const std::string& filename)
@@ -273,7 +290,7 @@ std::string LevelEditor::TileTypeToString(TileType type)
 {
     switch (type) {
     case TileType::EMPTY: return "Empty";
-    case TileType::SOLID_BLOCK: return "Solid Block";
+    case TileType::SOLID_BLOCK: return "Tile";
     case TileType::SPIKE: return "Spike";
     case TileType::DOOR: return "Door";
     default: return "Unknown";

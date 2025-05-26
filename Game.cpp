@@ -1,85 +1,123 @@
 #include "stdafx.h"
 #include "Game.h"
-#include "Map.h"
+#include "LevelEditor.h"
 
-Map map(32.0f);
-Camera camera(300.0f); // Zoom más pequeño para mejor rendimiento
-
-const float movementSpeed = 200.0f;
+// Variables globales
+Camera camera(10.0f);
+Player player;
+Map gameMap(32.0f);
+LevelEditor* levelEditor = nullptr;
 
 void init(const sf::Window& window)
 {
-    std::cout << "Cargando texturas..." << std::endl;
+    // Inicializar el mapa con un tamaño por defecto
+    gameMap.createBoard(100, 50);
 
-    // Cargar solo texturas esenciales
-    try {
-        for (auto& file : std::filesystem::directory_iterator("./assets/World/"))
-        {
-            if (file.path().extension() == ".png")
-            {
-                std::string name = file.path().filename().string();
-                name = name.substr(0, name.find_last_of('.'));
+    // Crear el editor de niveles
+    levelEditor = new LevelEditor(gameMap, 32.0f);
 
-                if (Resources::textures[name].loadFromFile(file.path().string())) {
-                    std::cout << "Textura cargada: " << name << std::endl;
-                }
-                else {
-                    std::cout << "Error cargando: " << name << std::endl;
-                }
-            }
-        }
-    }
-    catch (...) {
-        std::cout << "Error accediendo a directorio de texturas" << std::endl;
-    }
+    // Cargar recursos si es necesario
+    // Resources::textures["player"].loadFromFile("assets/player.png");
+    // etc...
 
-    // Crear texturas básicas si no existen
-    if (Resources::textures.find("Tile") == Resources::textures.end()) {
-        sf::Image img;
-        img.create(32, 32, sf::Color::White);
-        Resources::textures["Tile"].loadFromImage(img);
-        std::cout << "Textura Tile creada por defecto" << std::endl;
-    }
-
-    // Crear un mapa pequeño para testing
-    map.grid.clear();
-    map.grid.resize(30, std::vector<int>(20, 0));
-
-    // Crear algunos bloques de prueba
-    for (int x = 10; x < 20; ++x) {
-        for (int y = 10; y < 15; ++y) {
-            map.grid[x][y] = 1;
-        }
-    }
-
-    camera.position = sf::Vector2f(400.0f, 300.0f);
-    std::cout << "Inicialización completada" << std::endl;
+    std::cout << "Game initialized" << std::endl;
+    std::cout << "Press E to toggle Level Editor" << std::endl;
 }
 
 void HandleInput(const sf::Event& event, const sf::RenderWindow& window)
 {
-    // Simplificado por ahora
+    // El editor maneja su propia entrada
+    if (levelEditor) {
+        levelEditor->HandleInput(event, window);
+    }
+
+    // Solo procesar entrada del juego si no estamos en modo editor
+    if (!levelEditor || !levelEditor->IsEditorMode()) {
+        // Aquí irían los controles del jugador
+        if (event.type == sf::Event::KeyPressed) {
+            switch (event.key.code) {
+            case sf::Keyboard::W:
+                // Mover jugador hacia arriba
+                break;
+            case sf::Keyboard::S:
+                // Mover jugador hacia abajo
+                break;
+            case sf::Keyboard::A:
+                // Mover jugador hacia la izquierda
+                break;
+            case sf::Keyboard::D:
+                // Mover jugador hacia la derecha
+                break;
+            }
+        }
+    }
+
+    // Controles de cámara (funcionan siempre)
+    if (event.type == sf::Event::KeyPressed) {
+        switch (event.key.code) {
+        case sf::Keyboard::Up:
+            camera.position.y -= 32.0f;
+            break;
+        case sf::Keyboard::Down:
+            camera.position.y += 32.0f;
+            break;
+        case sf::Keyboard::Left:
+            camera.position.x -= 32.0f;
+            break;
+        case sf::Keyboard::Right:
+            camera.position.x += 32.0f;
+            break;
+        case sf::Keyboard::Z:
+            camera.zoomLevel *= 0.9f; // Zoom in
+            break;
+        case sf::Keyboard::X:
+            camera.zoomLevel *= 1.1f; // Zoom out
+            break;
+        }
+    }
 }
 
 void Update(float deltaTime)
 {
-    // Movimiento básico
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-        camera.position.x += movementSpeed * deltaTime;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-        camera.position.x -= movementSpeed * deltaTime;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-        camera.position.y -= movementSpeed * deltaTime;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-        camera.position.y += movementSpeed * deltaTime;
+    // Actualizar el editor
+    if (levelEditor) {
+        levelEditor->Update(deltaTime);
+    }
+
+    // Solo actualizar lógica del juego si no estamos en modo editor
+    if (!levelEditor || !levelEditor->IsEditorMode()) {
+        // Aquí iría la lógica de actualización del juego
+        // player.Update(deltaTime);
+        // Física, colisiones, etc.
+    }
 }
 
 void Render(Renderer& renderer)
 {
-    map.Draw(renderer);
+    // Dibujar el mapa
+    gameMap.Draw(renderer);
+
+    // Solo dibujar elementos del juego si no estamos en modo editor
+    if (!levelEditor || !levelEditor->IsEditorMode()) {
+        // Dibujar jugador y otros elementos del juego
+        // player.Draw(renderer);
+    }
+
+    // Dibujar overlay del editor (grid, etc.)
+    if (levelEditor) {
+        levelEditor->Draw(renderer);
+    }
 }
 
 void RenderUI(sf::RenderWindow& window)
 {
-    // UI simplificada por ahora
+    // Dibujar UI del editor
+    if (levelEditor) {
+        levelEditor->DrawUI(window);
+    }
+
+    // Dibujar otra UI del juego si es necesario
+    if (!levelEditor || !levelEditor->IsEditorMode()) {
+        // UI del juego normal (HUD, etc.)
+    }
 }

@@ -1,105 +1,107 @@
 #include "stdafx.h"
-#include "Game.h"
+#include "Map.h"
+#include "Resources.h"
 
-Map::Map(float cellSize)
-	: cellSize(cellSize), grid()
+Map::Map(float cellSize) : cellSize(cellSize)
 {
+    // Constructor
 }
 
 void Map::createBoard(size_t width, size_t height)
 {
-	grid = std::vector(width, std::vector(height, 0));
+    grid.clear();
+    grid.resize(width, std::vector<int>(height, 0)); // 0 = EMPTY por defecto
 
-	bool last = 0;
-	for (auto& column : grid)
-	{
-		for (auto& cell : column)
-		{
-			last = cell = !last;
-		}
-		if (width % 2 == 0)
-		{
-			last = !last;
-		}
-	}
+    std::cout << "Map created with size: " << width << "x" << height << std::endl;
 }
 
 void Map::Draw(Renderer& renderer)
 {
-	// OPTIMIZACIÓN: Solo renderizar lo que está en pantalla
-	sf::Vector2f cameraPos = camera.position;
-	sf::Vector2f cameraSize = sf::Vector2f(800, 600); // Tamaño aproximado de vista
+    for (size_t x = 0; x < grid.size(); ++x) {
+        for (size_t y = 0; y < grid[x].size(); ++y) {
+            int tileType = grid[x][y];
 
-	int startX = std::max(0, (int)((cameraPos.x - cameraSize.x / 2) / cellSize) - 1);
-	int endX = std::min((int)grid.size(), (int)((cameraPos.x + cameraSize.x / 2) / cellSize) + 1);
-	int startY = 0;
-	int endY = grid.empty() ? 0 : std::min((int)grid[0].size(), (int)((cameraPos.y + cameraSize.y / 2) / cellSize) + 1);
+            if (tileType != 0) { // Solo dibujar tiles que no sean vacíos
+                sf::Vector2f position(
+                    x * cellSize + cellSize / 2.0f,
+                    y * cellSize + cellSize / 2.0f
+                );
+                sf::Vector2f size(cellSize, cellSize);
 
-	for (int x = startX; x < endX && x < (int)grid.size(); ++x)
-	{
-		for (int y = startY; y < endY && y < (int)grid[x].size(); ++y)
-		{
-			if (grid[x][y] != 0)
-			{
-				sf::Vector2f position(
-					cellSize * x + cellSize / 2.0f,
-					cellSize * y + cellSize / 2.0f  // ESTE ERA EL BUG - estaba multiplicando por cellSize dos veces
-				);
-				sf::Vector2f size(cellSize, cellSize);
+                // Usar diferentes texturas basadas en el tipo de tile
+                std::string textureName;
+                switch (tileType) {
+                case 1: // SOLID_BLOCK
+                    textureName = "Tile";
+                    break;
+                case 2: // SPIKE
+                    textureName = "Spike";
+                    break;
+                case 3: // DOOR
+                    textureName = "Door";
+                    break;
+                default:
+                    textureName = "Tile";
+                    break;
+                }
 
-				switch (grid[x][y]) {
-				case 1: // Solid Block
-					if (Resources::textures.find("Tile") != Resources::textures.end()) {
-						renderer.Draw(Resources::textures["Tile"], position, size);
-					}
-					break;
-				case 2: // Spike
-					if (Resources::textures.find("Spike") != Resources::textures.end()) {
-						renderer.Draw(Resources::textures["Spike"], position, size);
-					}
-					else if (Resources::textures.find("Tile") != Resources::textures.end()) {
-						renderer.Draw(Resources::textures["Tile"], position, size);
-					}
-					break;
-				case 3: // Door
-					if (Resources::textures.find("Door") != Resources::textures.end()) {
-						renderer.Draw(Resources::textures["Door"], position, size);
-					}
-					else if (Resources::textures.find("Tile") != Resources::textures.end()) {
-						renderer.Draw(Resources::textures["Tile"], position, size);
-					}
-					break;
-				}
-			}
-		}
-	}
+                // Si no tenemos texturas cargadas, crear texturas simples de colores
+                if (Resources::textures.find(textureName) == Resources::textures.end()) {
+                    CreateDefaultTextures();
+                }
+
+                if (Resources::textures.find(textureName) != Resources::textures.end()) {
+                    renderer.Draw(Resources::textures[textureName], position, size);
+                }
+            }
+        }
+    }
 }
 
 void Map::InitFromImage(const sf::Image& image)
 {
-	grid.clear();
-	grid.resize(image.getSize().x, std::vector<int>(image.getSize().y, 0));
-	for (size_t x = 0; x < image.getSize().x; ++x)
-	{
-		for (size_t y = 0; y < image.getSize().y; ++y)
-		{
-			sf::Color pixelColor = image.getPixel(x, y);
-			if (pixelColor == sf::Color::Black)
-			{
-				grid[x][y] = 1; // Solid block for black pixels
-			}
-			else if (pixelColor == sf::Color::Red)
-			{
-				grid[x][y] = 2; // Spike for red pixels
-			}
-			else if (pixelColor == sf::Color::Blue)
-			{
-				grid[x][y] = 3; // Door for blue pixels
-			}
-			else
-			{
-				grid[x][y] = 0; // Empty for other colors
-			}
-		}
-	}
+    unsigned int width = image.getSize().x;
+    unsigned int height = image.getSize().y;
+
+    createBoard(width, height);
+
+    for (unsigned int x = 0; x < width; ++x) {
+        for (unsigned int y = 0; y < height; ++y) {
+            sf::Color pixel = image.getPixel(x, y);
+
+            // Convertir colores a tipos de tiles
+            if (pixel == sf::Color::Black) {
+                grid[x][y] = 1; // SOLID_BLOCK
+            }
+            else if (pixel == sf::Color::Red) {
+                grid[x][y] = 2; // SPIKE
+            }
+            else if (pixel == sf::Color::Blue) {
+                grid[x][y] = 3; // DOOR
+            }
+            else {
+                grid[x][y] = 0; // EMPTY
+            }
+        }
+    }
+
+    std::cout << "Map initialized from image: " << width << "x" << height << std::endl;
+}
+
+void Map::CreateDefaultTextures()
+{
+    // Crear texturas simples de colores si no tenemos archivos de imagen
+    sf::Image solidImage;
+    solidImage.create(32, 32, sf::Color(128, 128, 128)); // Gris para bloques sólidos
+    Resources::textures["Tile"].loadFromImage(solidImage);
+
+    sf::Image spikeImage;
+    spikeImage.create(32, 32, sf::Color::Red); // Rojo para pinchos
+    Resources::textures["Spike"].loadFromImage(spikeImage);
+
+    sf::Image doorImage;
+    doorImage.create(32, 32, sf::Color::Blue); // Azul para puertas
+    Resources::textures["Door"].loadFromImage(doorImage);
+
+    std::cout << "Default textures created" << std::endl;
 }

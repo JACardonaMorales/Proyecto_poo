@@ -43,7 +43,7 @@ private:
     sf::Text tileTypeText;
 
     // Grid helper
-    sf::Vector2i ScreenToGrid(const sf::Vector2i& screenPos, const sf::View& view);
+    sf::Vector2i ScreenToGrid(const sf::Vector2i& screenPos, const sf::RenderWindow& window);
     sf::Vector2f GridToScreen(const sf::Vector2i& gridPos);
     void PlaceTile(const sf::Vector2i& gridPos);
     void EraseTile(const sf::Vector2i& gridPos);

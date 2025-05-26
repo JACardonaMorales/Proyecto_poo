@@ -1,83 +1,52 @@
 #include "stdafx.h"
 #include "Game.h"
-#include <iostream>
 
 int main()
 {
-    std::cout << "Iniciando juego..." << std::endl;
-
-    sf::RenderWindow window(sf::VideoMode(800, 600), "Juego - Debugging");
+    // Crear ventana
+    sf::RenderWindow window(sf::VideoMode(1200, 800), "Dead Paradise");
     window.setFramerateLimit(60);
 
-    std::cout << "Ventana creada, inicializando..." << std::endl;
+    // Inicializar el juego
+    init(window);
 
-    try {
-        init(window);
-        std::cout << "Inicialización completada" << std::endl;
-    }
-    catch (const std::exception& e) {
-        std::cout << "Error en inicialización: " << e.what() << std::endl;
-        return -1;
-    }
-
+    // Variables para el tiempo
     sf::Clock clock;
-    int frameCount = 0;
 
-    while (window.isOpen())
-    {
+    // Bucle principal
+    while (window.isOpen()) {
         float deltaTime = clock.restart().asSeconds();
-        frameCount++;
 
-        // Debug FPS cada segundo
-        if (frameCount % 60 == 0) {
-            std::cout << "FPS: " << 1.0f / deltaTime << std::endl;
-        }
-
+        // Manejar eventos
         sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed) {
                 window.close();
-
-            // Solo usar editor si no causa problemas
-            try {
-                HandleInput(event, window);
             }
-            catch (...) {
-                std::cout << "Error en HandleInput" << std::endl;
-            }
+
+            // Pasar eventos al juego
+            HandleInput(event, window);
         }
 
-        try {
-            Update(deltaTime);
-        }
-        catch (...) {
-            std::cout << "Error en Update" << std::endl;
-        }
+        // Actualizar
+        Update(deltaTime);
 
-        // Vista de cámara más conservadora
-        window.setView(camera.getView(sf::Vector2f(800, 600)));
+        // Configurar la vista de la cámara
+        window.setView(camera.getView(sf::Vector2f(window.getSize())));
 
-        window.clear(sf::Color::Black);
+        // Limpiar pantalla
+        window.clear(sf::Color(50, 50, 100)); // Fondo azul oscuro
 
-        try {
-            Renderer renderer(window);
-            Render(renderer);
-        }
-        catch (...) {
-            std::cout << "Error en Render" << std::endl;
-        }
+        // Crear renderer y dibujar
+        Renderer renderer(window);
+        Render(renderer);
 
-        try {
-            RenderUI(window);
-        }
-        catch (...) {
-            // Ignorar errores de UI por ahora
-        }
+        // Dibujar UI (se dibuja después de restaurar la vista por defecto)
+        RenderUI(window);
 
+        // Mostrar
         window.display();
     }
 
-    std::cout << "Juego terminado" << std::endl;
     return 0;
 }

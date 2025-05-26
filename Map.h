@@ -9,9 +9,11 @@ public:
 	void Draw(Renderer& renderer);
 	void InitFromImage(const sf::Image& image);
 
-	std::vector<std::vector<int>> grid; 
+	std::vector<std::vector<int>> grid;
 	float cellSize;
+
 private:
+	void CreateDefaultTextures();
 };
 
 
