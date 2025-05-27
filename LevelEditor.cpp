@@ -5,18 +5,21 @@
 
 extern Camera camera;
 
+LevelEditor::~LevelEditor()
+{
+}
+
 LevelEditor::LevelEditor()
     : gridWidth(50), gridHeight(30), tileSize(32.0f), currentTileType(TileType::WALL),
     isActive(false), showGrid(true), isPainting(false), isErasing(false),
     cameraPosition(0.0f, 0.0f), zoomLevel(1.0f), torchAnimationTime(0.0f)
 {
+    // Crear el renderer compartido
+    tileRenderer = std::make_shared<TileRenderer>(tileSize);
     Initialize();
 }
 
-LevelEditor::~LevelEditor()
-{
-}
-
+// Simplifica InitializeTileInfos() - ahora se hace en TileRenderer
 void LevelEditor::Initialize()
 {
     // Initialize grid
@@ -26,67 +29,116 @@ void LevelEditor::Initialize()
     editorView.setSize(800.0f, 600.0f);
     editorView.setCenter(0.0f, 0.0f);
 
-    // Initialize tile information
-    InitializeTileInfos();
+    // TileRenderer ya maneja la inicialización de tile infos
 
-    // Load textures
+    // Load textures - esto se puede mover también al TileRenderer
     LoadTextures();
 
     // Setup UI
     SetupUI();
 }
 
-void LevelEditor::InitializeTileInfos()
-{
-    tileInfos.clear();
-
-    // Basic tiles
-    tileInfos.push_back(TileInfo(TileType::EMPTY, false, false, sf::Vector2i(0, 0), ""));
-    tileInfos.push_back(TileInfo(TileType::WALL, true, false, sf::Vector2i(0, 0), "wall"));
-    tileInfos.push_back(TileInfo(TileType::PLATFORM, true, false, sf::Vector2i(0, 0), "platform"));
-    tileInfos.push_back(TileInfo(TileType::SPIKES, true, false, sf::Vector2i(0, 0), "spikes"));
-    tileInfos.push_back(TileInfo(TileType::TORCH, false, true, sf::Vector2i(0, 0), "torch"));
-    tileInfos.push_back(TileInfo(TileType::DOOR, true, false, sf::Vector2i(0, 0), "door"));
-
-    // Tileset blocks - assuming 16x16 tiles in a 4x4 grid
-    tileInfos.push_back(TileInfo(TileType::BLOCK_TOP_LEFT, true, false, sf::Vector2i(0, 0), "tileset"));
-    tileInfos.push_back(TileInfo(TileType::BLOCK_TOP, true, false, sf::Vector2i(1, 0), "tileset"));
-    tileInfos.push_back(TileInfo(TileType::BLOCK_TOP_RIGHT, true, false, sf::Vector2i(2, 0), "tileset"));
-    tileInfos.push_back(TileInfo(TileType::BLOCK_LEFT, true, false, sf::Vector2i(0, 1), "tileset"));
-    tileInfos.push_back(TileInfo(TileType::BLOCK_CENTER, true, false, sf::Vector2i(1, 1), "tileset"));
-    tileInfos.push_back(TileInfo(TileType::BLOCK_RIGHT, true, false, sf::Vector2i(2, 1), "tileset"));
-    tileInfos.push_back(TileInfo(TileType::BLOCK_BOTTOM_LEFT, true, false, sf::Vector2i(0, 2), "tileset"));
-    tileInfos.push_back(TileInfo(TileType::BLOCK_BOTTOM, true, false, sf::Vector2i(1, 2), "tileset"));
-    tileInfos.push_back(TileInfo(TileType::BLOCK_BOTTOM_RIGHT, true, false, sf::Vector2i(2, 2), "tileset"));
-
-    // Shadow variations
-    tileInfos.push_back(TileInfo(TileType::BLOCK_SHADOW_LEFT, false, false, sf::Vector2i(3, 0), "tileset"));
-    tileInfos.push_back(TileInfo(TileType::BLOCK_SHADOW_RIGHT, false, false, sf::Vector2i(3, 1), "tileset"));
-    tileInfos.push_back(TileInfo(TileType::BLOCK_SHADOW_BOTTOM, false, false, sf::Vector2i(3, 2), "tileset"));
-    tileInfos.push_back(TileInfo(TileType::BLOCK_SHADOW_CORNER, false, false, sf::Vector2i(3, 3), "tileset"));
-}
-
 void LevelEditor::LoadTextures()
 {
-    // Load individual textures from files
-    Resources::LoadTexture("spikes", "assets/sprites/spike.png");
-    Resources::LoadTexture("torch", "assets/sprites/torch.png");
-    Resources::LoadTexture("tileset", "assets/sprites/tileset.png");
-    Resources::LoadTexture("door", "assets/sprites/door.png");
+    // Estructura para definir texturas a cargar
+    struct TextureInfo {
+        std::string name;
+        std::string path;
+        bool required;
+    };
 
-    // Create placeholder platform texture (to be replaced later with actual sprite)
-    sf::Texture platformTexture;
-    sf::Image platformImage;
-    platformImage.create(32, 8, sf::Color::Red);
-    platformTexture.loadFromImage(platformImage);
-    Resources::AddTexture("platform", platformTexture);
+    std::vector<TextureInfo> texturesToLoad = {
+        {"spikes", "assets/sprites/spike.png", false},
+        {"torch", "assets/sprites/torch.png", false},
+        {"tileset", "assets/sprites/tileset.png", false},
+        {"door", "assets/sprites/door.png", false}
+    };
 
-    // Create basic wall texture
-    sf::Texture wallTexture;
-    sf::Image wallImage;
-    wallImage.create(32, 32, sf::Color(100, 100, 100));
-    wallTexture.loadFromImage(wallImage);
-    Resources::AddTexture("wall", wallTexture);
+    // Cargar texturas con mejor manejo de errores
+    for (const auto& textureInfo : texturesToLoad) {
+        if (!Resources::LoadTexture(textureInfo.name, textureInfo.path)) {
+            std::cout << "Warning: Could not load " << textureInfo.name
+                << " from " << textureInfo.path << std::endl;
+            if (textureInfo.required) {
+                std::cout << "Error: Required texture failed to load!" << std::endl;
+            }
+        }
+    }
+    CreatePlaceholderTextures();
+}
+
+void LevelEditor::CreatePlaceholderTextures()
+{
+	// Platform texture (mejorado)
+	if (!Resources::GetTexture("platform"))
+	{
+		sf::Texture platformTexture;
+		sf::Image platformImage;
+		platformImage.create(64, 16); // Más ancho que alto para plataformas
+
+		// Crear patrón de madera más realista
+		sf::Color woodBase(139, 69, 19);
+		sf::Color woodLight(160, 82, 45);
+		sf::Color woodDark(101, 67, 33);
+
+		for (int x = 0; x < 64; ++x)
+		{
+			for (int y = 0; y < 16; ++y)
+			{
+				sf::Color pixelColor = woodBase;
+
+				// Añadir variación
+				if (y == 0 || y == 1) pixelColor = woodLight; // Top highlight
+				if (y >= 14) pixelColor = woodDark; // Bottom shadow
+				if (x % 8 == 0) pixelColor = woodDark; // Vertical lines
+
+				platformImage.setPixel(x, y, pixelColor);
+			}
+		}
+
+		platformTexture.loadFromImage(platformImage);
+		Resources::AddTexture("platform", platformTexture);
+	}
+
+	// Wall texture (mejorado)
+	if (!Resources::GetTexture("wall"))
+	{
+		sf::Texture wallTexture;
+		sf::Image wallImage;
+		wallImage.create(32, 32);
+
+		// Crear patrón de piedra
+		sf::Color stoneBase(100, 100, 100);
+		sf::Color stoneLight(130, 130, 130);
+		sf::Color stoneDark(70, 70, 70);
+
+		for (int x = 0; x < 32; ++x)
+		{
+			for (int y = 0; y < 32; ++y)
+			{
+				sf::Color pixelColor = stoneBase;
+
+				// Crear patrón de bloques de piedra
+				if ((x + y) % 8 < 2) pixelColor = stoneDark;
+				if (x % 16 == 0 || y % 16 == 0) pixelColor = stoneLight;
+
+				wallImage.setPixel(x, y, pixelColor);
+			}
+		}
+
+		wallTexture.loadFromImage(wallImage);
+		Resources::AddTexture("wall", wallTexture);
+	}
+}
+
+std::string LevelEditor::GetTextureNameForTileType(TileType type) const
+{
+    for (const auto& tileInfo : tileInfos) {
+        if (tileInfo.type == type) {
+            return tileInfo.textureName;
+        }
+    }
+    return "";
 }
 
 void LevelEditor::SetupUI()
@@ -301,84 +353,12 @@ void LevelEditor::RenderUI(sf::RenderWindow& window)
 
 void LevelEditor::RenderTile(sf::RenderWindow& window, TileType type, const sf::Vector2f& position)
 {
-    if (type == TileType::TORCH) {
-        RenderTorch(window, position, torchAnimationTime);
-        return;
-    }
-
-    for (const auto& tileInfo : tileInfos) {
-        if (tileInfo.type == type && !tileInfo.textureName.empty()) {
-            // Get texture using the proper Resources method
-            sf::Texture* texture = Resources::GetTexture(tileInfo.textureName);
-            if (texture) {
-                sf::Sprite sprite;
-                sprite.setTexture(*texture);
-
-                if (tileInfo.textureName == "tileset") {
-                    // Set texture rect for tileset tiles
-                    sf::IntRect rect = GetTilesetRect(type);
-                    sprite.setTextureRect(rect);
-                }
-
-                sprite.setOrigin(sprite.getLocalBounds().width / 2.0f, sprite.getLocalBounds().height / 2.0f);
-                sprite.setPosition(position);
-
-                // Scale to fit tile size
-                float scaleX = tileSize / sprite.getLocalBounds().width;
-                float scaleY = tileSize / sprite.getLocalBounds().height;
-                sprite.setScale(scaleX, scaleY);
-
-                window.draw(sprite);
-            }
-            break;
-        }
-    }
-}
-
-void LevelEditor::RenderTorch(sf::RenderWindow& window, const sf::Vector2f& position, float animTime)
-{
-    // Get texture using the proper Resources method
-    sf::Texture* texture = Resources::GetTexture("torch");
-    if (texture) {
-        sf::Sprite sprite;
-        sprite.setTexture(*texture);
-
-        // Calculate animation frame (assuming 8 frames horizontally)
-        int frameWidth = texture->getSize().x / 8;
-        int frameHeight = texture->getSize().y;
-        int currentFrame = (int)(animTime * 8.0f) % 8; // 8 frames animation
-
-        sf::IntRect frameRect(currentFrame * frameWidth, 0, frameWidth, frameHeight);
-        sprite.setTextureRect(frameRect);
-
-        sprite.setOrigin(frameWidth / 2.0f, frameHeight / 2.0f);
-        sprite.setPosition(position);
-
-        // Scale to fit tile size
-        float scaleX = tileSize / frameWidth;
-        float scaleY = tileSize / frameHeight;
-        sprite.setScale(scaleX, scaleY);
-
-        window.draw(sprite);
-    }
+    tileRenderer->RenderTile(window, type, position, torchAnimationTime);
 }
 
 sf::IntRect LevelEditor::GetTilesetRect(TileType type) const
 {
-    for (const auto& tileInfo : tileInfos) {
-        if (tileInfo.type == type) {
-            // Assuming 16x16 tiles in tileset
-            int tileWidth = 32;
-            int tileHeight = 32;
-            return sf::IntRect(
-                tileInfo.textureCoord.x * tileWidth,
-                tileInfo.textureCoord.y * tileHeight,
-                tileWidth,
-                tileHeight
-            );
-        }
-    }
-    return sf::IntRect(0, 0, 32, 32);
+    return tileRenderer->GetTilesetRect(type);
 }
 
 void LevelEditor::SetCurrentTile(TileType type)
@@ -386,16 +366,17 @@ void LevelEditor::SetCurrentTile(TileType type)
     currentTileType = type;
 }
 
+// Usa este método en lugar de verificar manualmente:
 void LevelEditor::PlaceTile(int x, int y)
 {
-    if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight) {
+    if (IsValidGridPosition(x, y)) {
         grid[y][x] = currentTileType;
     }
 }
 
 void LevelEditor::RemoveTile(int x, int y)
 {
-    if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight) {
+    if (IsValidGridPosition(x, y)) {
         grid[y][x] = TileType::EMPTY;
     }
 }
@@ -418,6 +399,7 @@ bool LevelEditor::HasCollisionAt(int x, int y) const
     }
     return false;
 }
+
 
 sf::Vector2i LevelEditor::GetGridPosition(const sf::Vector2f& worldPos) const
 {
@@ -444,7 +426,12 @@ void LevelEditor::NewLevel(int width, int height)
 void LevelEditor::SaveLevel(const std::string& filename)
 {
     std::ofstream file(filename);
-    if (file.is_open()) {
+    if (!file.is_open()) {
+        std::cout << "Error: Could not open file for saving: " << filename << std::endl;
+        return;
+    }
+
+    try {
         file << gridWidth << " " << gridHeight << std::endl;
         for (int y = 0; y < gridHeight; ++y) {
             for (int x = 0; x < gridWidth; ++x) {
@@ -454,24 +441,49 @@ void LevelEditor::SaveLevel(const std::string& filename)
             file << std::endl;
         }
         file.close();
+        std::cout << "Level saved successfully: " << filename << std::endl;
+    }
+    catch (const std::exception& e) {
+        std::cout << "Error saving level: " << e.what() << std::endl;
     }
 }
 
 void LevelEditor::LoadLevel(const std::string& filename)
 {
     std::ifstream file(filename);
-    if (file.is_open()) {
-        file >> gridWidth >> gridHeight;
-        NewLevel(gridWidth, gridHeight);
+    if (!file.is_open()) {
+        std::cout << "Error: Could not open file for loading: " << filename << std::endl;
+        return;
+    }
+
+    try {
+        int newWidth, newHeight;
+        file >> newWidth >> newHeight;
+
+        if (newWidth <= 0 || newHeight <= 0 || newWidth > 200 || newHeight > 200) {
+            std::cout << "Error: Invalid level dimensions: " << newWidth << "x" << newHeight << std::endl;
+            file.close();
+            return;
+        }
+
+        NewLevel(newWidth, newHeight);
 
         for (int y = 0; y < gridHeight; ++y) {
             for (int x = 0; x < gridWidth; ++x) {
                 int tileValue;
-                file >> tileValue;
+                if (!(file >> tileValue)) {
+                    std::cout << "Error: Invalid tile data at position " << x << "," << y << std::endl;
+                    file.close();
+                    return;
+                }
                 grid[y][x] = (TileType)tileValue;
             }
         }
         file.close();
+        std::cout << "Level loaded successfully: " << filename << std::endl;
+    }
+    catch (const std::exception& e) {
+        std::cout << "Error loading level: " << e.what() << std::endl;
     }
 }
 

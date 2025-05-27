@@ -31,7 +31,7 @@ bool Resources::LoadTexture(const std::string& name, const std::string& filename
 bool Resources::AddTexture(const std::string& name, const sf::Texture& texture)
 {
     auto newTexture = std::make_unique<sf::Texture>();
-    *newTexture = texture; // Copy the texture
+    *newTexture = texture; 
     GetTexturesMap()[name] = std::move(newTexture);
     return true;
 }

@@ -2,6 +2,8 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 
+#include "TileRenderer.h"
+
 enum class TileType {
     EMPTY = 0,
     WALL = 1,
@@ -45,6 +47,8 @@ public:
     ~LevelEditor();
 
     void Initialize();
+    void CreatePlaceholderTextures();
+    std::string GetTextureNameForTileType(TileType type) const;
     void HandleInput(const sf::Event& event, const sf::RenderWindow& window);
     void Update(float deltaTime);
     void Render(sf::RenderWindow& window);
@@ -58,6 +62,13 @@ public:
     void RemoveTile(int x, int y);
     TileType GetTileAt(int x, int y) const;
     bool HasCollisionAt(int x, int y) const;
+
+    // Método mejorado para validar posiciones de grid:
+    bool LevelEditor::IsValidGridPosition(int x, int y) const
+    {
+        return x >= 0 && x < gridWidth && y >= 0 && y < gridHeight;
+    }
+
 
     // File operations
     void SaveLevel(const std::string& filename);
@@ -86,6 +97,7 @@ public:
 
 private:
     // Grid data
+    std::shared_ptr<TileRenderer> tileRenderer;
     std::vector<std::vector<TileType>> grid;
     int gridWidth;
     int gridHeight;

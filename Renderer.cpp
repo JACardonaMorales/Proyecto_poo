@@ -11,6 +11,7 @@ void Renderer::Draw(const sf::Texture& texture, const sf::Vector2f& position, co
 	
 }
 
+
 Renderer::Renderer(sf::RenderTarget& target) : target(target)
 {
 	// Constructor implementation (if needed)
