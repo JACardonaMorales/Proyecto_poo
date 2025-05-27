@@ -3,7 +3,7 @@
 #include "SpriteLoader.h"
 
 // Global instances
-Camera camera(5.0f);
+Camera camera(1.0f);
 Player player;
 Map gameMap(32.0f);
 LevelEditor levelEditor;
@@ -23,7 +23,7 @@ void init(const sf::Window& window)
     spriteLoader.LoadSprite("door", "assets/sprites/door.png");
 
     // Load tileset
-    spriteLoader.LoadTileset("assets/sprites/tileset.png", 16, 16);
+    spriteLoader.LoadTileset("assets/sprites/tileset.png", 32, 32);
 
     // Register torch animation
     SpriteLoader::AnimationData torchAnim;
@@ -162,7 +162,7 @@ void RenderUI(sf::RenderWindow& window)
         sf::Text gameInfo;
 
         // Try to load font, use default if failed
-        if (font.loadFromFile("assets/font.ttf")) {
+        if (font.loadFromFile("assets/arial.ttf")) {
             gameInfo.setFont(font);
         }
 

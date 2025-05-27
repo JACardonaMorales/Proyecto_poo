@@ -13,7 +13,7 @@ void SpriteLoader::LoadPlatformSprite(const std::string& filename)
     if (platformTexture.loadFromFile(filename)) {
         platformLoaded = true;
         // Also add to main resources for compatibility
-        Resources::LoadTexture("platform", "assets/sprites/platform");
+        Resources::AddTexture("platform", platformTexture);
         std::cout << "Platform sprite loaded successfully from: " << filename << std::endl;
     }
     else {
@@ -22,11 +22,9 @@ void SpriteLoader::LoadPlatformSprite(const std::string& filename)
         CreateDefaultPlatformSprite();
     }
 }
-
 void SpriteLoader::CreateDefaultPlatformSprite()
 {
     sf::Image platformImage;
-
     // Create a more detailed wooden platform
     int width = 64;
     int height = 16;
@@ -77,7 +75,9 @@ void SpriteLoader::CreateDefaultPlatformSprite()
 
     platformTexture.loadFromImage(platformImage);
     platformLoaded = true;
-    Resources::textures["platform"] = platformTexture;
+
+    // Add to Resources using the proper method
+    Resources::AddTexture("platform", platformTexture);
 
     std::cout << "Default platform sprite created successfully!" << std::endl;
 }
@@ -95,7 +95,8 @@ bool SpriteLoader::LoadSprite(const std::string& name, const std::string& filena
     sf::Texture texture;
     if (texture.loadFromFile(filename)) {
         textures[name] = texture;
-        Resources::textures[name] = texture; // Also add to main resources
+        // Also add to main resources using the proper method
+        Resources::AddTexture(name, texture);
         std::cout << "Sprite '" << name << "' loaded from: " << filename << std::endl;
         return true;
     }

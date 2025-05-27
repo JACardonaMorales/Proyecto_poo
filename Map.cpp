@@ -143,67 +143,67 @@ void Map::DrawTilesetTile(Renderer& renderer, const sf::Vector2f& position, cons
         // Tileset tiles - assuming 16x16 tiles in the tileset
     case TileType::BLOCK_TOP_LEFT:
         textureName = "tileset";
-        textureRect = sf::IntRect(0, 0, 16, 16);
+        textureRect = sf::IntRect(0, 0, 32, 32);
         break;
 
     case TileType::BLOCK_TOP:
         textureName = "tileset";
-        textureRect = sf::IntRect(16, 0, 16, 16);
+        textureRect = sf::IntRect(32, 0, 32, 32);
         break;
 
     case TileType::BLOCK_TOP_RIGHT:
         textureName = "tileset";
-        textureRect = sf::IntRect(32, 0, 16, 16);
+        textureRect = sf::IntRect(64, 0, 32, 32);
         break;
 
     case TileType::BLOCK_LEFT:
         textureName = "tileset";
-        textureRect = sf::IntRect(0, 16, 16, 16);
+        textureRect = sf::IntRect(0, 32, 32, 32);
         break;
 
     case TileType::BLOCK_CENTER:
         textureName = "tileset";
-        textureRect = sf::IntRect(16, 16, 16, 16);
+        textureRect = sf::IntRect(32, 32, 32, 32);
         break;
 
     case TileType::BLOCK_RIGHT:
         textureName = "tileset";
-        textureRect = sf::IntRect(32, 16, 16, 16);
+        textureRect = sf::IntRect(64, 32, 32, 32);
         break;
 
     case TileType::BLOCK_BOTTOM_LEFT:
         textureName = "tileset";
-        textureRect = sf::IntRect(0, 32, 16, 16);
+        textureRect = sf::IntRect(0, 64, 32, 32);
         break;
 
     case TileType::BLOCK_BOTTOM:
         textureName = "tileset";
-        textureRect = sf::IntRect(16, 32, 16, 16);
+        textureRect = sf::IntRect(32, 64, 32, 32);
         break;
 
     case TileType::BLOCK_BOTTOM_RIGHT:
         textureName = "tileset";
-        textureRect = sf::IntRect(32, 32, 16, 16);
+        textureRect = sf::IntRect(64, 64, 32, 32);
         break;
 
     case TileType::BLOCK_SHADOW_LEFT:
         textureName = "tileset";
-        textureRect = sf::IntRect(48, 0, 16, 16);
+        textureRect = sf::IntRect(96, 0, 32, 32);
         break;
 
     case TileType::BLOCK_SHADOW_RIGHT:
         textureName = "tileset";
-        textureRect = sf::IntRect(48, 16, 16, 16);
+        textureRect = sf::IntRect(96, 32, 32, 32);
         break;
 
     case TileType::BLOCK_SHADOW_BOTTOM:
         textureName = "tileset";
-        textureRect = sf::IntRect(48, 32, 16, 16);
+        textureRect = sf::IntRect(96, 64, 32, 32);
         break;
 
     case TileType::BLOCK_SHADOW_CORNER:
         textureName = "tileset";
-        textureRect = sf::IntRect(48, 48, 16, 16);
+        textureRect = sf::IntRect(96, 96, 32, 32);
         break;
 
     default:

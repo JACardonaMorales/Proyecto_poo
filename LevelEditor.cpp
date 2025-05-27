@@ -297,6 +297,8 @@ void LevelEditor::RenderUI(sf::RenderWindow& window)
     window.draw(infoText);
 }
 
+// Fixed LevelEditor methods
+
 void LevelEditor::RenderTile(sf::RenderWindow& window, TileType type, const sf::Vector2f& position)
 {
     if (type == TileType::TORCH) {
@@ -306,10 +308,11 @@ void LevelEditor::RenderTile(sf::RenderWindow& window, TileType type, const sf::
 
     for (const auto& tileInfo : tileInfos) {
         if (tileInfo.type == type && !tileInfo.textureName.empty()) {
-            auto it = Resources::textures.find(tileInfo.textureName);
-            if (it != Resources::textures.end()) {
+            // Get texture using the proper Resources method
+            sf::Texture* texture = Resources::GetTexture(tileInfo.textureName);
+            if (texture) {
                 sf::Sprite sprite;
-                sprite.setTexture(it->second);
+                sprite.setTexture(*texture);
 
                 if (tileInfo.textureName == "tileset") {
                     // Set texture rect for tileset tiles
@@ -334,14 +337,15 @@ void LevelEditor::RenderTile(sf::RenderWindow& window, TileType type, const sf::
 
 void LevelEditor::RenderTorch(sf::RenderWindow& window, const sf::Vector2f& position, float animTime)
 {
-    auto it = Resources::textures.find("torch");
-    if (it != Resources::textures.end()) {
+    // Get texture using the proper Resources method
+    sf::Texture* texture = Resources::GetTexture("torch");
+    if (texture) {
         sf::Sprite sprite;
-        sprite.setTexture(it->second);
+        sprite.setTexture(*texture);
 
         // Calculate animation frame (assuming 8 frames horizontally)
-        int frameWidth = it->second.getSize().x / 8;
-        int frameHeight = it->second.getSize().y;
+        int frameWidth = texture->getSize().x / 8;
+        int frameHeight = texture->getSize().y;
         int currentFrame = (int)(animTime * 8.0f) % 8; // 8 frames animation
 
         sf::IntRect frameRect(currentFrame * frameWidth, 0, frameWidth, frameHeight);
@@ -364,8 +368,8 @@ sf::IntRect LevelEditor::GetTilesetRect(TileType type) const
     for (const auto& tileInfo : tileInfos) {
         if (tileInfo.type == type) {
             // Assuming 16x16 tiles in tileset
-            int tileWidth = 16;
-            int tileHeight = 16;
+            int tileWidth = 32;
+            int tileHeight = 32;
             return sf::IntRect(
                 tileInfo.textureCoord.x * tileWidth,
                 tileInfo.textureCoord.y * tileHeight,
@@ -374,7 +378,7 @@ sf::IntRect LevelEditor::GetTilesetRect(TileType type) const
             );
         }
     }
-    return sf::IntRect(0, 0, 16, 16);
+    return sf::IntRect(0, 0, 32, 32);
 }
 
 void LevelEditor::SetCurrentTile(TileType type)
