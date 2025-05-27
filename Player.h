@@ -54,14 +54,22 @@ public:
 	const sf::Vector2f& getVelocity() const;
 
 	//Inline functions
-	inline const bool& getCanJump() const { return this->canJump; }
-	inline void setCanJump(const bool canJump) { this->canJump = canJump; }
-	inline const bool& getIsOnGround() const { return this->isOnGround; }
-	inline void setIsOnGround(const bool isOnGround) { this->isOnGround = isOnGround; }
-	inline const bool& getIsOnPlatform() const { return this->isOnPlatform; }
-	inline void setIsOnPlatform(const bool isOnPlatform) { this->isOnPlatform = isOnPlatform; }
-	inline const bool& getIsOnLadder() const { return this->isOnLadder; }
-	inline void setIsOnLadder(const bool isOnLadder) { this->isOnLadder = isOnLadder; }
+
+	// Métodos adicionales necesarios para el sistema de físicas
+	void setIsOnGround(bool onGround) { isOnGround = onGround; }
+	void setCanJump(bool canJump) { this->canJump = canJump; }
+	void setIsOnPlatform(bool onPlatform) { isOnPlatform = onPlatform; }
+	
+
+	// Getters adicionales
+	bool getIsOnGround() const { return isOnGround; }
+	bool getCanJump() const { return canJump; }
+	bool getIsOnPlatform() const { return isOnPlatform; }
+	
+
+	// Método para establecer posición individual
+
+	void setPosition(const sf::Vector2f& position) { sprite.setPosition(position); }
 
 	//Modifiers
 	void setPosition(const float x, const float y);

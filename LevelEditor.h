@@ -71,6 +71,19 @@ public:
     int GetGridHeight() const { return gridHeight; }
     float GetTileSize() const { return tileSize; }
 
+    // Métodos de acceso necesarios para Game.cpp
+    void SetActive(bool active) { isActive = active; }
+    bool IsActive() const { return isActive; }
+
+
+    // Método para renderizar usando RenderWindow directamente
+    void Render(sf::RenderTarget& target) {
+        sf::RenderWindow* window = dynamic_cast<sf::RenderWindow*>(&target);
+        if (window) {
+            Render(*window);
+        }
+    }
+
 private:
     // Grid data
     std::vector<std::vector<TileType>> grid;

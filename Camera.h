@@ -1,11 +1,23 @@
+// Camera.h
 #pragma once
-class Camera
-{
+#include "Player.h"
+
+class Camera {
+private:
+    sf::View view;
+    Player* target;
+    sf::Vector2f bounds_min;
+    sf::Vector2f bounds_max;
+    float smoothing;
+
 public:
-	Camera(float zoomlevel = 5.0f);
-	sf::View getView(sf::Vector2f windowSize) const;
+    Camera();
 
-	float zoomLevel;
-	sf::Vector2f position;
+    void setTarget(Player* player);
+
+    void setBounds(float minX, float minY, float maxX, float maxY);
+
+    void update();
+
+    sf::View getView(const sf::Vector2f& windowSize);
 };
-

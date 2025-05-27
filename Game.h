@@ -1,28 +1,55 @@
+// Game.h - Declaraciones del sistema principal del juego
 #pragma once
-#include <SFML/Graphics.hpp>
+
 #include "Player.h"
 #include "Camera.h"
-#include "Renderer.h"
-#include "Resources.h"
-#include "Map.h"
-#include "Physics.h"
 #include "LevelEditor.h"
+#include "Renderer.h"
+#include <vector>
+#include <fstream>
+#include <iostream>
+#include "Map.h"
 #include "Resources.h"
 #include "SpriteLoader.h"
+#include "Physics.h"
 
 
-// Forward declaration
-class LevelEditor;
+// Estructura para representar el mapa del juego
+struct map {
+    std::vector<std::vector<int>> grid;
+    float cellSize;
 
-extern Camera camera;
+    map() : cellSize(32.0f) {}
+};
+
+// Variables globales del juego
 extern Player player;
-extern Map gameMap;
+extern Camera camera;
 extern LevelEditor levelEditor;
+extern Map currentMap;
 extern bool showLevelEditor;
+extern bool gameInitialized;
 
-void init(const sf::Window& window);
+// Funciones principales del juego
+void init(sf::RenderWindow& window);
 void HandleInput(const sf::Event& event, const sf::RenderWindow& window);
 void Update(float deltaTime);
 void Render(Renderer& renderer);
 void RenderUI(sf::RenderWindow& window);
+
+// Funciones de inicialización
+void LoadGameResources();
+void CreateDefaultPlayerSprite();
+void InitializePlayer();
+void LoadDefaultMap();
+void InitializeCamera();
+
+// Funciones de manejo de mapas
+bool LoadMapFromLevelEditor(const std::string& filename);
+void CreateBasicMap();
 void SyncMapWithEditor();
+
+// Funciones de renderizado
+void RenderMap(Renderer& renderer);
+void RenderMapTile(Renderer& renderer, int tileType, const sf::Vector2f& position);
+sf::Vector2f GetWorldPositionFromGrid(int gridX, int gridY);
