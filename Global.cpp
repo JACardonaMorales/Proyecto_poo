@@ -6,7 +6,67 @@
 #include "Infected_Ant.h"
 #include "ReyHongo.h"
 #include <memory>
+#include <fstream>
 
+sf::Color convert_sketch_from_text(int level, bool& level_finish,
+    std::vector<std::shared_ptr<Enemy>>& enemies,
+    sf::Color bg_color, MapManager& map_manager, Ray& ray) {
+
+    // Cargar el mapa desde archivo de texto
+    map_manager.load_map_from_text(level);
+
+    // Limpiar enemigos existentes
+    enemies.clear();
+
+    // Buscar elementos especiales en el mapa y crear enemigos
+    std::string filename = "maps/level_" + std::to_string(level) + ".txt";
+    std::ifstream file(filename);
+
+    if (!file.is_open()) {
+        std::cout << "Error: No se pudo abrir " << filename << " para buscar enemigos" << std::endl;
+        return bg_color;
+    }
+
+    std::string line;
+    int y = 0;
+
+    while (std::getline(file, line)) {
+        for (int x = 0; x < static_cast<int>(line.length()); x++) {
+            char c = line[x];
+            float world_x = x * 16.0f;
+            float world_y = y * 16.0f;
+
+            switch (c) {
+            case 'S': // Spawn del jugador (Entrance)
+                ray.set_position(world_x, world_y);
+                break;
+
+            case 'A': // Hormiga infectada normal
+                enemies.push_back(std::make_shared<Infected_Ant>(false, world_x, world_y));
+                break;
+
+            case 'a': // Hormiga infectada atacante
+                enemies.push_back(std::make_shared<Infected_Ant>(true, world_x, world_y));
+                break;
+
+            case 'M': // ReyHongo normal
+                enemies.push_back(std::make_shared<ReyHongo>(false, world_x, world_y));
+                break;
+
+            case 'm': // ReyHongo atacante
+                enemies.push_back(std::make_shared<ReyHongo>(true, world_x, world_y));
+                break;
+            }
+        }
+        y++;
+    }
+    file.close();
+
+    std::cout << "Enemigos cargados: " << enemies.size() << std::endl;
+    return bg_color;
+}
+
+// Función original para compatibilidad con imágenes
 sf::Color convert_sketch(int level, bool level_finish, std::vector<std::shared_ptr<Enemy>>& enemies,
     sf::Color bg_color, MapManager& map_manager, Ray& ray) {
 
@@ -109,7 +169,7 @@ unsigned char map_collision(float x, float y, const std::vector<Cell>& check_cel
     int map_y = static_cast<int>(y / CELL_SIZE);
 
     if (map_y >= 0 && map_y < static_cast<int>(map.size()) &&
-        map_x >= 0 && map_x < static_cast<int>(map[map_y].size())) {
+        map_x >= 0 && x < static_cast<int>(map[map_y].size())) {
 
         Cell cell = map[map_y][map_x];
 

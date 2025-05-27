@@ -1,24 +1,49 @@
 #pragma once
 #include "Global.h"
+#include "Animation.h"
 
-class MapManager
-{
-	sf::Image map_sketch;
-	sf::Sprite cell_sprite;
-	sf::Texture map_texture;
-	Map map;
+class MapManager {
+private:
+    sf::Image map_sketch;
+    sf::Sprite cell_sprite;
+    sf::Texture map_texture;
+    sf::Texture spikes_texture;
+    sf::Texture door_texture;
+    Map map;
+
+    // Animations and effects
+    Animation coin_animation;
+    Animation question_block_animation;
+    std::vector<Object> brick_particles;
+    std::vector<Object> question_block_coins;
 
 public:
-	MapManager();
+    MapManager();
 
-	unsigned short get_map_sketch_height() const;
-	unsigned short get_map_sketch_width() const;
-	unsigned short get_map_width() const;
+    // Map size functions
+    unsigned short get_map_sketch_height() const;
+    unsigned short get_map_sketch_width() const;
+    unsigned short get_map_width() const;
+    unsigned short get_map_height() const;
 
-	void draw_map(const unsigned i_view_x, sf::RenderWindow& i_window);
-	void set_map_cell(const unsigned short i_x, const unsigned short i_y, const Cell& i_cell);
-	void set_map_size(const unsigned short i_new_size);
-	void update_map_sketch(const unsigned char i_current_level);
+    // Map loading functions
+    void load_map_from_text(int level);
+    void update_map_sketch(int current_level);
+    sf::Color get_map_sketch_pixel(int x, int y) const;
 
-	sf::Color get_map_sketch_pixel(const unsigned short i_x, const unsigned short i_y) const;
+    // Map manipulation
+    void draw_map(bool draw_background, int level, float view_x, sf::RenderWindow& window);
+    void set_map_cell(int x, int y, Cell cell);
+    void set_map_size(unsigned int new_size);
+
+    // Collision detection
+    std::vector<unsigned char> map_collision(const std::vector<Cell>& check_cells, const sf::FloatRect& hitbox);
+    std::vector<unsigned char> map_collision(const std::vector<Cell>& check_cells,
+        const std::vector<Cell>& collision_cells,
+        const sf::FloatRect& hitbox);
+
+    // Effects
+    void add_brick_particles(float x, float y);
+    void add_question_block_coin(float x, float y);
+    void update();
 };

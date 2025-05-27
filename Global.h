@@ -1,48 +1,47 @@
 #pragma once
 
-
-#include <cstdlib>
-#include <ctime>
-#include <time.h>
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <SFML/Audio.hpp>
-#include <SFML/Network.hpp>
-#include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
-#include <SFML/System.hpp>
+#include <vector>
+#include <memory>
 #include <iostream>
-#include <filesystem>
-#include <initializer_list>
 #include <fstream>
-#include <sstream>
-
-// Constantes del juego
-constexpr unsigned short CELL_SIZE = 32; // Tamaño de cada celda en píxeles
-constexpr unsigned short SCREEN_WIDTH = 640;
-constexpr unsigned short SCREEN_HEIGHT = 480;
-
-// Enumeración para los tipos de celdas
-enum class Cell
-{
-	Empty,
-	Ground,    // Tierra
-	Door,      // Puerta
-	Spikes,		// Espinas
-	Torch_Animation, // Animación de antorcha
-	
-};
-
-// Tipo de mapa
-typedef std::vector<std::vector<Cell>> Map;
+#include <string>
+#include <algorithm>
 
 // Forward declarations
 class MapManager;
 class Ray;
 class Enemy;
 
-// Global utility functions
+// Cell types for the map
+enum class Cell : unsigned char {
+    Empty = 0,
+    Wall = 1,
+    Grass = 2,
+    Light = 3,
+    Life = 4,
+    Entrance = 5,
+    Prock = 6,
+    Spikes = 7,    // Nueva celda para pinchos
+    Door = 8       // Nueva celda para puerta
+};
+
+// Map type definition
+using Map = std::vector<std::vector<Cell>>;
+
+// Object class for particles and effects
+class Object {
+public:
+    float horizontal_speed;
+    float vertical_speed;
+    float x, y;
+
+    Object(float x, float y, float horizontal_speed, float vertical_speed)
+        : x(x), y(y), horizontal_speed(horizontal_speed), vertical_speed(vertical_speed) {
+    }
+};
+
+// Function prototypes
 sf::Color convert_sketch(int level, bool level_finish, std::vector<std::shared_ptr<Enemy>>& enemies,
     sf::Color bg_color, MapManager& map_manager, Ray& ray);
 
@@ -51,4 +50,3 @@ void draw_map(float view_x, const sf::Image& map_sketch, sf::RenderWindow& windo
 
 unsigned char map_collision(float x, float y, const std::vector<Cell>& check_cells,
     const std::vector<std::vector<Cell>>& map);
-
