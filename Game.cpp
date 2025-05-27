@@ -46,15 +46,13 @@ void init(const sf::Window& window)
 
     // Try to load a level file if it exists
     if (std::filesystem::exists("level.txt")) {
-        levelEditor.LoadLevel("level.txt");
-        // Copy level editor data to game map
-        const auto& editorGrid = levelEditor.GetGrid();
-        gameMap.createBoard(levelEditor.GetGridWidth(), levelEditor.GetGridHeight());
-
-        for (int y = 0; y < levelEditor.GetGridHeight(); ++y) {
-            for (int x = 0; x < levelEditor.GetGridWidth(); ++x) {
-                gameMap.grid[y][x] = static_cast<int>(editorGrid[y][x]);
-            }
+        try {
+            levelEditor.LoadLevel("level.txt");
+            // Copy level editor data to game map
+            SyncMapWithEditor();
+        }
+        catch (const std::exception& e) {
+            std::cout << "Error loading level: " << e.what() << std::endl;
         }
     }
 
@@ -76,13 +74,23 @@ void HandleInput(const sf::Event& event, const sf::RenderWindow& window)
         // Quick save/load when not in editor
         if (!showLevelEditor) {
             if (event.key.code == sf::Keyboard::F5) {
-                levelEditor.SaveLevel("quicksave.txt");
-                std::cout << "Quick saved to quicksave.txt" << std::endl;
+                try {
+                    levelEditor.SaveLevel("quicksave.txt");
+                    std::cout << "Quick saved to quicksave.txt" << std::endl;
+                }
+                catch (const std::exception& e) {
+                    std::cout << "Error saving: " << e.what() << std::endl;
+                }
             }
             if (event.key.code == sf::Keyboard::F9) {
-                levelEditor.LoadLevel("quicksave.txt");
-                SyncMapWithEditor();
-                std::cout << "Quick loaded from quicksave.txt" << std::endl;
+                try {
+                    levelEditor.LoadLevel("quicksave.txt");
+                    SyncMapWithEditor();
+                    std::cout << "Quick loaded from quicksave.txt" << std::endl;
+                }
+                catch (const std::exception& e) {
+                    std::cout << "Error loading: " << e.what() << std::endl;
+                }
             }
         }
     }
@@ -112,14 +120,21 @@ void Update(float deltaTime)
         // Update camera to follow player
         camera.position = player.getPosition();
 
-        // Simple boundary check
+        // Simple boundary check - verificar que grid no esté vacío
         sf::Vector2f playerPos = player.getPosition();
-        float mapWidth = gameMap.grid.empty() ? 0 : gameMap.grid[0].size() * gameMap.cellSize;
-        float mapHeight = gameMap.grid.size() * gameMap.cellSize;
+        float mapWidth = 0;
+        float mapHeight = 0;
+
+        if (!gameMap.grid.empty() && !gameMap.grid[0].empty()) {
+            mapWidth = gameMap.grid[0].size() * gameMap.cellSize;
+            mapHeight = gameMap.grid.size() * gameMap.cellSize;
+        }
 
         // Keep camera within reasonable bounds
-        camera.position.x = std::max(-mapWidth / 2.0f, std::min(mapWidth / 2.0f, camera.position.x));
-        camera.position.y = std::max(-mapHeight / 2.0f, std::min(mapHeight / 2.0f, camera.position.y));
+        if (mapWidth > 0 && mapHeight > 0) {
+            camera.position.x = std::max(-mapWidth / 2.0f, std::min(mapWidth / 2.0f, camera.position.x));
+            camera.position.y = std::max(-mapHeight / 2.0f, std::min(mapHeight / 2.0f, camera.position.y));
+        }
     }
 }
 
@@ -169,22 +184,40 @@ void RenderUI(sf::RenderWindow& window)
 
 void SyncMapWithEditor()
 {
-    // Copy level editor data to game map
-    const auto& editorGrid = levelEditor.GetGrid();
-    int editorWidth = levelEditor.GetGridWidth();
-    int editorHeight = levelEditor.GetGridHeight();
+    try {
+        // Copy level editor data to game map
+        const auto& editorGrid = levelEditor.GetGrid();
+        int editorWidth = levelEditor.GetGridWidth();
+        int editorHeight = levelEditor.GetGridHeight();
 
-    // Resize game map if needed
-    if (gameMap.grid.empty() ||
-        gameMap.grid[0].size() != editorWidth ||
-        gameMap.grid.size() != editorHeight) {
-        gameMap.createBoard(editorWidth, editorHeight);
-    }
-
-    // Copy tile data
-    for (int y = 0; y < editorHeight; ++y) {
-        for (int x = 0; x < editorWidth; ++x) {
-            gameMap.grid[y][x] = static_cast<int>(editorGrid[y][x]);
+        // Validar datos del editor
+        if (editorWidth <= 0 || editorHeight <= 0) {
+            std::cout << "Warning: Invalid editor dimensions" << std::endl;
+            return;
         }
+
+        if (editorGrid.empty()) {
+            std::cout << "Warning: Editor grid is empty" << std::endl;
+            return;
+        }
+
+        // Resize game map if needed
+        if (gameMap.grid.empty() ||
+            gameMap.grid[0].size() != editorWidth ||
+            gameMap.grid.size() != editorHeight) {
+            gameMap.createBoard(editorWidth, editorHeight);
+        }
+
+        // Copy tile data con verificación de bounds
+        for (int y = 0; y < editorHeight && y < (int)editorGrid.size(); ++y) {
+            for (int x = 0; x < editorWidth && x < (int)editorGrid[y].size(); ++x) {
+                if (y < (int)gameMap.grid.size() && x < (int)gameMap.grid[y].size()) {
+                    gameMap.grid[y][x] = static_cast<int>(editorGrid[y][x]);
+                }
+            }
+        }
+    }
+    catch (const std::exception& e) {
+        std::cout << "Error in SyncMapWithEditor: " << e.what() << std::endl;
     }
 }

@@ -68,40 +68,25 @@ void LevelEditor::InitializeTileInfos()
 
 void LevelEditor::LoadTextures()
 {
-    // Load individual textures
-    sf::Texture spikesTexture;
-    if (spikesTexture.loadFromFile("assets/sprites/spike.png")) {
-        Resources::textures["spikes"] = spikesTexture;
-    }
-
-    sf::Texture torchTexture;
-    if (torchTexture.loadFromFile("assets/sprites/torch.png")) {
-        Resources::textures["torch"] = torchTexture;
-    }
-
-    sf::Texture tilesetTexture;
-    if (tilesetTexture.loadFromFile("assets/sprites/tileset.png")) {
-        Resources::textures["tileset"] = tilesetTexture;
-    }
-
-    sf::Texture doorTexture;
-    if (doorTexture.loadFromFile("assets/sprites/door.png")) {
-        Resources::textures["door"] = doorTexture;
-    }
+    // Load individual textures from files
+    Resources::LoadTexture("spikes", "assets/sprites/spike.png");
+    Resources::LoadTexture("torch", "assets/sprites/torch.png");
+    Resources::LoadTexture("tileset", "assets/sprites/tileset.png");
+    Resources::LoadTexture("door", "assets/sprites/door.png");
 
     // Create placeholder platform texture (to be replaced later with actual sprite)
     sf::Texture platformTexture;
     sf::Image platformImage;
     platformImage.create(32, 8, sf::Color::Red);
     platformTexture.loadFromImage(platformImage);
-    Resources::textures["platform"] = platformTexture;
+    Resources::AddTexture("platform", platformTexture);
 
     // Create basic wall texture
     sf::Texture wallTexture;
     sf::Image wallImage;
     wallImage.create(32, 32, sf::Color(100, 100, 100));
     wallTexture.loadFromImage(wallImage);
-    Resources::textures["wall"] = wallTexture;
+    Resources::AddTexture("wall", wallTexture);
 }
 
 void LevelEditor::SetupUI()

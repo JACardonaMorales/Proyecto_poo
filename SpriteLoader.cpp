@@ -13,7 +13,7 @@ void SpriteLoader::LoadPlatformSprite(const std::string& filename)
     if (platformTexture.loadFromFile(filename)) {
         platformLoaded = true;
         // Also add to main resources for compatibility
-        Resources::textures["platform"] = platformTexture;
+        Resources::LoadTexture("platform", "assets/sprites/platform");
         std::cout << "Platform sprite loaded successfully from: " << filename << std::endl;
     }
     else {

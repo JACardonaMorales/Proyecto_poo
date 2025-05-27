@@ -12,32 +12,23 @@ Map::Map(float cellSize) : cellSize(cellSize)
 
 void Map::createBoard(size_t width, size_t height)
 {
+    // Validar parámetros
+    if (width == 0 || height == 0) {
+        width = std::max((size_t)1, width);
+        height = std::max((size_t)1, height);
+    }
+
     grid.clear();
     grid.resize(height, std::vector<int>(width, 0));
 }
 
 void Map::CreateDefaultTextures()
 {
-    // Load actual textures
-    sf::Texture spikesTexture;
-    if (spikesTexture.loadFromFile("assets/sprites/spike.png")) {
-        Resources::textures["spikes"] = spikesTexture;
-    }
-
-    sf::Texture torchTexture;
-    if (torchTexture.loadFromFile("assets/sprites/torch.png")) {
-        Resources::textures["torch"] = torchTexture;
-    }
-
-    sf::Texture tilesetTexture;
-    if (tilesetTexture.loadFromFile("assets/sprites/tileset.png")) {
-        Resources::textures["tileset"] = tilesetTexture;
-    }
-
-    sf::Texture doorTexture;
-    if (doorTexture.loadFromFile("assets/sprites/door.png")) {
-        Resources::textures["door"] = doorTexture;
-    }
+    // Load actual textures usando el sistema seguro
+    Resources::LoadTexture("spikes", "assets/sprites/spike.png");
+    Resources::LoadTexture("torch", "assets/sprites/torch.png");
+    Resources::LoadTexture("tileset", "assets/sprites/tileset.png");
+    Resources::LoadTexture("door", "assets/sprites/door.png");
 }
 
 void Map::CreatePlaceholderTextures()
@@ -49,7 +40,7 @@ void Map::CreatePlaceholderTextures()
     sf::Image wallImage;
     wallImage.create(32, 32, sf::Color(100, 100, 100));
     wallTexture.loadFromImage(wallImage);
-    Resources::textures["wall"] = wallTexture;
+    Resources::AddTexture("wall", wallTexture);
 
     // Platform texture (placeholder - replace with actual sprite later)
     sf::Texture platformTexture;
@@ -62,11 +53,16 @@ void Map::CreatePlaceholderTextures()
         }
     }
     platformTexture.loadFromImage(platformImage);
-    Resources::textures["platform"] = platformTexture;
+    Resources::AddTexture("platform", platformTexture);
 }
 
 void Map::Draw(Renderer& renderer)
 {
+    // Verificar que el grid no esté vacío
+    if (grid.empty() || grid[0].empty()) {
+        return; // No hay nada que dibujar
+    }
+
     static sf::Clock animationClock;
     float animationTime = animationClock.getElapsedTime().asSeconds();
 
@@ -95,14 +91,14 @@ void Map::Draw(Renderer& renderer)
 
 void Map::DrawAnimatedTorch(Renderer& renderer, const sf::Vector2f& position, const sf::Vector2f& size, float animationTime)
 {
-    auto it = Resources::textures.find("torch");
-    if (it != Resources::textures.end()) {
+    sf::Texture* texture = Resources::GetTexture("torch");
+    if (texture) {
         sf::Sprite sprite;
-        sprite.setTexture(it->second);
+        sprite.setTexture(*texture);
 
         // Calculate animation frame (assuming 8 frames horizontally)
-        int frameWidth = it->second.getSize().x / 8;
-        int frameHeight = it->second.getSize().y;
+        int frameWidth = texture->getSize().x / 8;
+        int frameHeight = texture->getSize().y;
         int currentFrame = (int)(animationTime * 8.0f) % 8; // 8 frames animation
 
         sf::IntRect frameRect(currentFrame * frameWidth, 0, frameWidth, frameHeight);
@@ -116,9 +112,9 @@ void Map::DrawAnimatedTorch(Renderer& renderer, const sf::Vector2f& position, co
         float scaleY = size.y / frameHeight;
         sprite.setScale(scaleX, scaleY);
 
-        // Draw using a simple render target (since we don't have direct access to window here)
-        // This is a simplified version - you might need to adapt based on your Renderer class
-        // renderer.Draw(it->second, position, size); // Use this if your renderer supports texture rects
+        // Para texturas con rects específicos, necesitarás extender tu Renderer
+        // Por ahora usamos el método básico
+        renderer.Draw(*texture, position, size);
     }
 }
 
@@ -214,10 +210,9 @@ void Map::DrawTilesetTile(Renderer& renderer, const sf::Vector2f& position, cons
         return; // Don't draw unknown tiles
     }
 
-    auto it = Resources::textures.find(textureName);
-    if (it != Resources::textures.end()) {
-        // For now, use the basic renderer - you might need to extend it to support texture rects
-        renderer.Draw(it->second, position, size);
+    sf::Texture* texture = Resources::GetTexture(textureName);
+    if (texture) {
+        renderer.Draw(*texture, position, size);
     }
 }
 
@@ -239,7 +234,7 @@ void Map::InitFromImage(const sf::Image& image)
             else if (pixel == sf::Color::Red) {
                 grid[y][x] = static_cast<int>(TileType::PLATFORM);
             }
-            else if (pixel == sf::Color::Red) {
+            else if (pixel == sf::Color::Magenta) { // Cambié esto para que sea diferente de Red
                 grid[y][x] = static_cast<int>(TileType::SPIKES);
             }
             else if (pixel == sf::Color::Yellow) {
