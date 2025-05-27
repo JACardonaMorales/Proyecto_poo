@@ -1,4 +1,5 @@
 #include "stdafx.h"
+
 #include "MapRenderer.h"
 #include <fstream>
 #include <iostream>
@@ -30,13 +31,13 @@ bool MapRenderer::LoadMap(const std::string& filename) {
 
         // Resize and read tile data
         mapData.tiles.clear();
-        mapData.tiles.resize(mapData.height, std::vector<TileType>(mapData.width));
+        mapData.tiles.resize(static_cast<size_t>(mapData.height), std::vector<TileType>(static_cast<size_t>(mapData.width)));
 
         for (int y = 0; y < mapData.height; ++y) {
             for (int x = 0; x < mapData.width; ++x) {
                 int tileValue;
                 file.read(reinterpret_cast<char*>(&tileValue), sizeof(int));
-                mapData.tiles[y][x] = static_cast<TileType>(tileValue);
+                mapData.tiles[static_cast<size_t>(y)][static_cast<size_t>(x)] = static_cast<TileType>(tileValue);
             }
         }
 
@@ -70,7 +71,7 @@ bool MapRenderer::SaveMap(const std::string& filename) const {
         // Write tile data
         for (int y = 0; y < mapData.height; ++y) {
             for (int x = 0; x < mapData.width; ++x) {
-                int tileValue = static_cast<int>(mapData.tiles[y][x]);
+                int tileValue = static_cast<int>(mapData.tiles[static_cast<size_t>(y)][static_cast<size_t>(x)]);
                 file.write(reinterpret_cast<const char*>(&tileValue), sizeof(int));
             }
         }
@@ -117,7 +118,7 @@ void MapRenderer::Render(sf::RenderWindow& window, const Camera& camera) {
     // Render tiles
     for (int y = 0; y < mapData.height; ++y) {
         for (int x = 0; x < mapData.width; ++x) {
-            TileType tileType = mapData.tiles[y][x];
+            TileType tileType = mapData.tiles[static_cast<size_t>(y)][static_cast<size_t>(x)];
 
             if (tileType == TileType::EMPTY) {
                 continue;
@@ -153,7 +154,7 @@ void MapRenderer::RenderFullMap(sf::RenderWindow& window) {
     // Render all tiles without culling
     for (int y = 0; y < mapData.height; ++y) {
         for (int x = 0; x < mapData.width; ++x) {
-            TileType tileType = mapData.tiles[y][x];
+            TileType tileType = mapData.tiles[static_cast<size_t>(y)][static_cast<size_t>(x)];
 
             if (tileType == TileType::EMPTY) {
                 continue;
@@ -177,8 +178,8 @@ sf::Vector2f MapRenderer::GetWorldPosition(int gridX, int gridY) const {
 }
 
 sf::Vector2i MapRenderer::GetGridPosition(const sf::Vector2f& worldPos) const {
-    int gridX = static_cast<int>(std::floor((worldPos.x + mapData.width * mapData.tileSize * 0.5f) / mapData.tileSize));
-    int gridY = static_cast<int>(std::floor((worldPos.y + mapData.height * mapData.tileSize * 0.5f) / mapData.tileSize));
+    int gridX = static_cast<int>(std::floor((worldPos.x + static_cast<float>(mapData.width) * mapData.tileSize * 0.5f) / mapData.tileSize));
+    int gridY = static_cast<int>(std::floor((worldPos.y + static_cast<float>(mapData.height) * mapData.tileSize * 0.5f) / mapData.tileSize));
 
     // Clamp to valid range
     gridX = std::max(0, std::min(gridX, mapData.width - 1));
@@ -191,12 +192,12 @@ TileType MapRenderer::GetTileAt(int gridX, int gridY) const {
     if (gridX < 0 || gridX >= mapData.width || gridY < 0 || gridY >= mapData.height) {
         return TileType::EMPTY;
     }
-    return mapData.tiles[gridY][gridX];
+    return mapData.tiles[static_cast<size_t>(gridY)][static_cast<size_t>(gridX)];
 }
 
 void MapRenderer::SetTileAt(int gridX, int gridY, TileType type) {
     if (gridX >= 0 && gridX < mapData.width && gridY >= 0 && gridY < mapData.height) {
-        mapData.tiles[gridY][gridX] = type;
+        mapData.tiles[static_cast<size_t>(gridY)][static_cast<size_t>(gridX)] = type;
     }
 }
 
@@ -222,5 +223,5 @@ void MapRenderer::Clear(int width, int height) {
     mapData.width = width;
     mapData.height = height;
     mapData.tiles.clear();
-    mapData.tiles.resize(height, std::vector<TileType>(width, TileType::EMPTY));
+    mapData.tiles.resize(static_cast<size_t>(height), std::vector<TileType>(static_cast<size_t>(width), TileType::EMPTY));
 }

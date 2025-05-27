@@ -23,14 +23,12 @@ enum class TileType {
     BLOCK_SHADOW_CORNER = 23
 };
 
-struct TileInfo {
+struct Tile {
     TileType type;
-    bool hasCollision;
+    sf::Vector2f position;
     bool isAnimated;
-    sf::Vector2i textureCoord; // Coordinates in tileset
-    std::string textureName;
+    float animationTime;
+    int currentFrame;
 
-    TileInfo(TileType t, bool collision, bool animated, sf::Vector2i coord, const std::string& texture)
-        : type(t), hasCollision(collision), isAnimated(animated), textureCoord(coord), textureName(texture) {
-    }
+    Tile() : type(TileType::EMPTY), isAnimated(false), animationTime(0.0f), currentFrame(0) {}
 };

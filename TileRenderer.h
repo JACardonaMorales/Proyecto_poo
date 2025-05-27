@@ -1,7 +1,5 @@
 #pragma once
-#include "LevelEditor.h"
 #include "Game.h"
-#include "Resources.h"
 #include <SFML/Graphics.hpp>
 #include <vector>
 

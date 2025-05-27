@@ -3,81 +3,68 @@
 
 #include "Player.h"
 #include "Camera.h"
-#include "LevelEditor.h"
-#include "Renderer.h"
-#include <vector>
-#include <fstream>
-#include <iostream>
 #include "Map.h"
 #include "MapRenderer.h"
 #include "Resources.h"
-#include "SpriteLoader.h"
-#include "Physics.h"
-#include "Types.h"
 
-// Forward declarations
-class Camera;
-class Player;
-class LevelEditor;
+struct MapData;
+class MapRenderer;
 
-// Global variables that need to be declared
-extern bool showLevelEditor;
-extern Camera camera;
-extern Player player;
-extern LevelEditor levelEditor;
-
-// Game initialization and main functions
-void init(sf::RenderWindow& window);
-void HandleInput(sf::Event& event, sf::RenderWindow& window);
-void Update(float deltaTime);
-void Render(Renderer& renderer);
-void RenderUI(sf::RenderWindow& window);
-
-// Game state functions
-void InitializeTileInfos();
-void RenderTorch(sf::RenderWindow& window, const sf::Vector2f& position, float animTime);
-void GetTilesIndex();
-void resetAnimationTimer();
-void climb();
-void update();
-
-// Camera class definition
-class Camera {
+class GameMode{
 private:
-    sf::Vector2f position;
-    sf::Vector2f targetPosition;
-    float smoothing;
-    sf::Vector2f bounds;
+    MapRenderer mapRenderer;
+	Camera camera;
+    Player* player;
+
+    bool isInitialized;
+    std::string currentMapFile;
+
+    // Game state
+    bool isPaused;
+    sf::Clock gameTimer;
+
+    // UI elements for game mode
+    sf::Font font;
+    sf::Text debugText;
+    bool showDebugInfo;
+
+    void InitializeUI();
+    void UpdateDebugInfo();
+    void RenderUI(sf::RenderWindow& window);
 
 public:
-    explicit Camera(float smoothingFactor = 0.1f)
-        : position(0.0f, 0.0f), targetPosition(0.0f, 0.0f),
-        smoothing(smoothingFactor), bounds(0.0f, 0.0f) {
-    }
+    GameMode();
+    ~GameMode();
 
-    void setTarget(const sf::Vector2f& target) {
-        targetPosition = target;
-    }
+    // Map management
+    bool LoadMap(const std::string& filename);
+    void SetMapData(const MapData& data);
 
-    void update(float deltaTime) {
-        // Smooth camera movement
-        sf::Vector2f diff = targetPosition - position;
-        position += diff * smoothing;
-    }
+    // Player management
+    void SetPlayer(Player* p);
+    Player* GetPlayer() const { return player; }
 
-    sf::View getView(const sf::Vector2f& viewSize) const {
-        sf::View view;
-        view.setCenter(position);
-        view.setSize(viewSize);
-        return view;
-    }
+    // Game loop
+    void Update(float deltaTime);
+    void Render(sf::RenderWindow& window);
+    void HandleEvent(const sf::Event& event);
 
-    sf::Vector2f getPosition() const {
-        return position;
-    }
+    // Game state
+    void Pause() { isPaused = true; }
+    void Resume() { isPaused = false; }
+    bool IsPaused() const { return isPaused; }
 
-    void setPosition(const sf::Vector2f& pos) {
-        position = pos;
-        targetPosition = pos;
-    }
+    // Utility
+    sf::Vector2f GetPlayerSpawnPosition() const;
+    bool IsValidPosition(const sf::Vector2f& position) const;
+    TileType GetTileAtPosition(const sf::Vector2f& position) const;
+
+    
+    // Map info
+    const MapRenderer& GetMapRenderer() const { return mapRenderer; }
+    sf::FloatRect GetMapBounds() const { return mapRenderer.GetMapBounds(); }
+
+    // Debug
+    void ToggleDebugInfo() { showDebugInfo = !showDebugInfo; }
+    bool IsDebugInfoVisible() const { return showDebugInfo; }
 };

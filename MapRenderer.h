@@ -1,12 +1,6 @@
 // MapRenderer.h
 #pragma once
 #include "TileRenderer.h"
-#include "LevelEditor.h"
-#include "Camera.h"
-#include <SFML/Graphics.hpp>
-#include <vector>
-#include <string>
-
 struct MapData {
     std::vector<std::vector<TileType>> tiles;
     int width;
@@ -15,11 +9,13 @@ struct MapData {
 
     MapData() : width(0), height(0), tileSize(32.0f) {}
 
-    MapData(int w, int h, float size = 32.0f)
+    explicit MapData(int w, int h, float size = 32.0f)
         : width(w), height(h), tileSize(size) {
-        tiles.resize(height, std::vector<TileType>(width, TileType::EMPTY));
+        tiles.resize(static_cast<size_t>(height), std::vector<TileType>(static_cast<size_t>(width), TileType::EMPTY));
     }
 };
+
+class TileRenderer;
 
 class MapRenderer {
 private:
@@ -33,7 +29,7 @@ private:
     sf::FloatRect cullingBounds;
 
 public:
-    MapRenderer(float tileSize = 32.0f);
+    explicit MapRenderer(float tileSize = 32.0f);
 
     // Load map from file
     bool LoadMap(const std::string& filename);
