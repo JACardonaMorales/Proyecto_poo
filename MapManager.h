@@ -12,10 +12,7 @@ private:
     Map map;
 
     // Animations and effects
-    Animation coin_animation;
-    Animation question_block_animation;
-    std::vector<Object> brick_particles;
-    std::vector<Object> question_block_coins;
+
 
 public:
     MapManager();
@@ -27,7 +24,7 @@ public:
     unsigned short get_map_height() const;
 
     // Map loading functions
-    void load_map_from_text(int level);
+    void MapManager::load_map_from_text(int level);
     void update_map_sketch(int current_level);
     sf::Color get_map_sketch_pixel(int x, int y) const;
 
@@ -43,7 +40,4 @@ public:
         const sf::FloatRect& hitbox);
 
     // Effects
-    void add_brick_particles(float x, float y);
-    void add_question_block_coin(float x, float y);
-    void update();
 };

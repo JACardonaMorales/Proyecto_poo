@@ -22,8 +22,8 @@ enum class Cell : unsigned char {
     Life = 4,
     Entrance = 5,
     Prock = 6,
-    Spikes = 7,    // Nueva celda para pinchos
-    Door = 8       // Nueva celda para puerta
+    Spikes = 7,
+    Door = 8
 };
 
 // Map type definition
@@ -36,17 +36,8 @@ public:
     float vertical_speed;
     float x, y;
 
-    Object(float x, float y, float horizontal_speed, float vertical_speed)
-        : x(x), y(y), horizontal_speed(horizontal_speed), vertical_speed(vertical_speed) {
-    }
+    Object(float x, float y, float horizontal_speed, float vertical_speed);
 };
 
-// Function prototypes
-sf::Color convert_sketch(int level, bool level_finish, std::vector<std::shared_ptr<Enemy>>& enemies,
-    sf::Color bg_color, MapManager& map_manager, Ray& ray);
-
-void draw_map(float view_x, const sf::Image& map_sketch, sf::RenderWindow& window,
-    const sf::Texture& map_texture, const std::vector<std::vector<Cell>>& map);
-
-unsigned char map_collision(float x, float y, const std::vector<Cell>& check_cells,
-    const std::vector<std::vector<Cell>>& map);
+// Function prototypes - REMOVED convert_sketch since we're not using it
+// Removed: sf::Color convert_sketch(int level, bool level_finish, std::vector<std::shared_ptr<Enemy>>

@@ -33,7 +33,7 @@ public:
     bool get_dead() const;
     float get_vertical_speed() const;
     float get_x() const;
-    float get_y() const;
+    float get_y() const { return y; }
     int get_lifes() const;
     void set_lifes(int value);
     void die(bool instant_death = false);
