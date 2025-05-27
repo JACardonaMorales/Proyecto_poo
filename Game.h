@@ -7,6 +7,9 @@
 #include "Map.h"
 #include "Physics.h"
 #include "LevelEditor.h"
+#include "Resources.h"
+#include "SpriteLoader.h"
+
 
 // Forward declaration
 class LevelEditor;

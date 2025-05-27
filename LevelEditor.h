@@ -50,6 +50,7 @@ public:
     void Render(sf::RenderWindow& window);
     void RenderGrid(sf::RenderWindow& window);
     void RenderUI(sf::RenderWindow& window);
+    bool isActive;
 
     // Tile management
     void SetCurrentTile(TileType type);
@@ -79,7 +80,7 @@ private:
 
     // Editor state
     TileType currentTileType;
-    bool isActive;
+   
     bool showGrid;
     bool isPainting;
     bool isErasing;

@@ -15,3 +15,8 @@ Renderer::Renderer(sf::RenderTarget& target) : target(target)
 {
 	// Constructor implementation (if needed)
 }
+
+// Implement the accessor for the target
+sf::RenderTarget& Renderer::GetTarget() {
+	return target;
+}

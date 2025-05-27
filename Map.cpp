@@ -22,6 +22,21 @@ void Map::createBoard(size_t width, size_t height)
     grid.resize(height, std::vector<int>(width, 0));
 }
 
+sf::Vector2f Map::GetWorldPosition(int gridX, int gridY) const {
+    float worldX = gridX * cellSize - (grid[0].size() * cellSize) / 2.0f + cellSize / 2.0f;
+    float worldY = gridY * cellSize - (grid.size() * cellSize) / 2.0f + cellSize / 2.0f;
+    return sf::Vector2f(worldX, worldY);
+}
+
+sf::Texture* Map::GetTileTexture(TileType type) {
+    switch (type) {
+    case TileType::WALL: return Resources::GetTexture("wall");
+    case TileType::PLATFORM: return Resources::GetTexture("platform");
+    case TileType::SPIKES: return Resources::GetTexture("spikes");
+    case TileType::DOOR: return Resources::GetTexture("door");
+    default: return nullptr;
+    }
+}
 void Map::CreateDefaultTextures()
 {
     // Load actual textures usando el sistema seguro

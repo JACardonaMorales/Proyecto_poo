@@ -19,6 +19,8 @@ public:
 	float cellSize;
 
 private:
+	sf::Vector2f GetWorldPosition(int gridX, int gridY) const;
+	sf::Texture* GetTileTexture(TileType type);
 	void CreateDefaultTextures();
 	void CreatePlaceholderTextures();
 	void DrawAnimatedTorch(Renderer& renderer, const sf::Vector2f& position, const sf::Vector2f& size, float animationTime);
