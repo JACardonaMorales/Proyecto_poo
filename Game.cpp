@@ -1,385 +1,209 @@
-// Game.cpp - Implementación completa del sistema principal
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "Game.h"
 #include "Resources.h"
-#include "Physics.h"
-#include "SpriteLoader.h"
+#include "TileRenderer.h"
+#include <iostream>
 
-// Variables globales del juego
-Player player;
-Camera camera;
-LevelEditor levelEditor;
-Map currentMap;
+// Global variables
 bool showLevelEditor = false;
-bool gameInitialized = false;
+Camera camera;
+Player player;
+LevelEditor levelEditor;
+TileRenderer tileRenderer;
+float gameTime = 0.0f;
 
-void init(sf::RenderWindow& window)
-{
+void init(sf::RenderWindow& window) {
     std::cout << "Initializing game..." << std::endl;
 
-    // Cargar recursos básicos
-    LoadGameResources();
+    // Load resources
+    if (!Resources::LoadTexture("tileset", "assets/tileset.png")) {
+        std::cout << "Warning: Could not load tileset.png" << std::endl;
+    }
 
-    // Inicializar el jugador
-    InitializePlayer();
+    if (!Resources::LoadTexture("player", "assets/player.png")) {
+        std::cout << "Warning: Could not load player.png" << std::endl;
+    }
 
-    // Cargar el mapa por defecto
-    LoadDefaultMap();
+    // Initialize tile renderer
+    tileRenderer.InitializeTileInfos();
 
-    // Inicializar la cámara
-    InitializeCamera();
+    // Initialize camera
+    camera.setPosition(sf::Vector2f(0.0f, 0.0f));
 
-    // Inicializar el editor de niveles
-    levelEditor.SetActive(false);
-
-    gameInitialized = true;
     std::cout << "Game initialized successfully!" << std::endl;
 }
 
-void LoadGameResources()
-{
-    std::cout << "Loading game resources..." << std::endl;
+void HandleInput(sf::Event& event, sf::RenderWindow& window) {
+    if (event.type == sf::Event::KeyPressed) {
+        switch (event.key.code) {
+        case sf::Keyboard::Tab:
+            showLevelEditor = !showLevelEditor;
+            std::cout << "Level Editor: " << (showLevelEditor ? "ON" : "OFF") << std::endl;
+            break;
 
-    // Cargar sprite del jugador
-    if (!Resources::LoadTexture("RaySprite", "assets/sprites/ray.png")) {
-        // Crear sprite por defecto del jugador si no se encuentra el archivo
-        CreateDefaultPlayerSprite();
-    }
+        case sf::Keyboard::F5:
+            std::cout << "Quick save (not implemented)" << std::endl;
+            break;
 
-    // Usar SpriteLoader para cargar recursos adicionales
-    SpriteLoader& loader = SpriteLoader::getInstance();
+        case sf::Keyboard::F9:
+            std::cout << "Quick load (not implemented)" << std::endl;
+            break;
 
-    // Cargar sprites del nivel editor
-    loader.LoadSprite("wall", "assets/sprites/wall.png");
-    loader.LoadSprite("spikes", "assets/sprites/spike.png");
-    loader.LoadSprite("torch", "assets/sprites/torch.png");
-    loader.LoadSprite("door", "assets/sprites/door.png");
-
-    // Cargar tileset
-    loader.LoadTileset("assets/sprites/tileset.png", 32, 32);
-
-    // Cargar sprite de plataforma (o crear uno por defecto)
-    loader.LoadPlatformSprite("assets/sprites/platform.png");
-
-    std::cout << "Resources loaded!" << std::endl;
-}
-
-void CreateDefaultPlayerSprite()
-{
-    std::cout << "Creating default player sprite..." << std::endl;
-
-    sf::Image playerImage;
-    playerImage.create(32, 32, sf::Color::Transparent);
-
-    // Crear un sprite simple del jugador (cuadrado azul con detalles)
-    for (int x = 8; x < 24; ++x) {
-        for (int y = 8; y < 24; ++y) {
-            playerImage.setPixel(x, y, sf::Color::Blue);
+        default:
+            break;
         }
-    }
-
-    // Agregar algunos detalles
-    // Ojos
-    playerImage.setPixel(12, 12, sf::Color::White);
-    playerImage.setPixel(20, 12, sf::Color::White);
-    playerImage.setPixel(12, 13, sf::Color::Black);
-    playerImage.setPixel(20, 13, sf::Color::Black);
-
-    // Sonrisa
-    for (int x = 14; x < 18; ++x) {
-        playerImage.setPixel(x, 18, sf::Color::White);
-    }
-
-    sf::Texture playerTexture;
-    playerTexture.loadFromImage(playerImage);
-    Resources::AddTexture("RaySprite", playerTexture);
-
-    std::cout << "Default player sprite created!" << std::endl;
-}
-
-void InitializePlayer()
-{
-    std::cout << "Initializing player..." << std::endl;
-
-    // El constructor del Player ya inicializa todo
-    // Solo necesitamos posicionarlo
-    player.setPosition(0.0f, 0.0f); // Posición inicial en el centro del mundo
-
-    std::cout << "Player initialized at position (0, 0)" << std::endl;
-}
-
-void LoadDefaultMap()
-{
-    std::cout << "Loading default map..." << std::endl;
-
-    // Cargar el mapa desde el archivo level.txt
-    if (LoadMapFromLevelEditor("level.txt")) {
-        std::cout << "Map loaded from level.txt successfully!" << std::endl;
-    }
-    else {
-        // Crear un mapa básico si no se puede cargar el archivo
-        CreateBasicMap();
-        std::cout << "Created basic default map" << std::endl;
-    }
-}
-
-bool LoadMapFromLevelEditor(const std::string& filename)
-{
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        return false;
-    }
-
-    int width, height;
-    file >> width >> height;
-
-    currentMap.grid.clear();
-    currentMap.grid.resize(height, std::vector<int>(width));
-    currentMap.cellSize = 32.0f;
-
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            file >> currentMap.grid[y][x];
-        }
-    }
-
-    file.close();
-    return true;
-}
-
-void CreateBasicMap()
-{
-    // Crear un mapa básico de 50x30 con algunas plataformas
-    currentMap.grid.clear();
-    currentMap.grid.resize(30, std::vector<int>(50, 0)); // 30 filas, 50 columnas
-    currentMap.cellSize = 32.0f;
-
-    // Agregar suelo en la parte inferior
-    for (int x = 0; x < 50; ++x) {
-        currentMap.grid[28][x] = 14; // BLOCK_CENTER
-        currentMap.grid[29][x] = 14; // BLOCK_CENTER
-    }
-
-    // Agregar algunas plataformas
-    for (int x = 10; x < 20; ++x) {
-        currentMap.grid[25][x] = 2; // PLATFORM
-    }
-
-    for (int x = 30; x < 40; ++x) {
-        currentMap.grid[22][x] = 2; // PLATFORM
-    }
-
-    // Agregar algunos obstáculos
-    currentMap.grid[27][15] = 3; // SPIKES
-    currentMap.grid[27][35] = 3; // SPIKES
-
-    // Agregar una antorcha
-    currentMap.grid[24][25] = 4; // TORCH
-}
-
-void InitializeCamera()
-{
-    camera.setTarget(&player);
-    camera.setBounds(-800.0f, -480.0f, 800.0f, 480.0f); // Límites del mapa
-}
-
-void HandleInput(const sf::Event& event, const sf::RenderWindow& window)
-{
-    // Toggle del editor de niveles
-    if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Tab) {
-        showLevelEditor = !showLevelEditor;
-        levelEditor.SetActive(showLevelEditor);
 
         if (showLevelEditor) {
-            std::cout << "Level Editor enabled" << std::endl;
+            // Handle level editor input
+            HandleLevelEditorInput(event, window);
         }
         else {
-            std::cout << "Level Editor disabled" << std::endl;
+            // Handle player input
+            HandlePlayerInput(event);
         }
     }
 
-    // Quick save/load
+    if (event.type == sf::Event::MouseButtonPressed) {
+        if (showLevelEditor) {
+            HandleLevelEditorInput(event, window);
+        }
+    }
+}
+
+void HandlePlayerInput(sf::Event& event) {
+    // Handle continuous input for player movement
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) || sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
+        player.moveLeft();
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) || sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
+        player.moveRight();
+    }
+    if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) {
+        player.jump();
+    }
+}
+
+void HandleLevelEditorInput(sf::Event& event, sf::RenderWindow& window) {
+    // Handle level editor specific input
     if (event.type == sf::Event::KeyPressed) {
-        if (event.key.code == sf::Keyboard::F5) {
-            levelEditor.SaveLevel("quicksave.txt");
-            std::cout << "Quick saved!" << std::endl;
-        }
-        if (event.key.code == sf::Keyboard::F9) {
-            levelEditor.LoadLevel("quicksave.txt");
-            LoadMapFromLevelEditor("quicksave.txt");
-            std::cout << "Quick loaded!" << std::endl;
+        switch (event.key.code) {
+        case sf::Keyboard::Num1:
+            levelEditor.setSelectedTile(TileType::WALL);
+            break;
+        case sf::Keyboard::Num2:
+            levelEditor.setSelectedTile(TileType::PLATFORM);
+            break;
+        case sf::Keyboard::Num3:
+            levelEditor.setSelectedTile(TileType::SPIKES);
+            break;
+        case sf::Keyboard::Num4:
+            levelEditor.setSelectedTile(TileType::TORCH);
+            break;
+        case sf::Keyboard::Num5:
+            levelEditor.setSelectedTile(TileType::DOOR);
+            break;
+        case sf::Keyboard::F1:
+            levelEditor.saveLevel("level.dat");
+            break;
+        case sf::Keyboard::F2:
+            levelEditor.loadLevel("level.dat");
+            break;
+        case sf::Keyboard::G:
+            levelEditor.toggleGrid();
+            break;
+        default:
+            break;
         }
     }
 
-    // Pasar input al editor si está activo
-    if (showLevelEditor) {
-        levelEditor.HandleInput(event, window);
+    if (event.type == sf::Event::MouseButtonPressed) {
+        sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+        sf::Vector2f worldPos = window.mapPixelToCoords(mousePos);
+
+        if (event.mouseButton.button == sf::Mouse::Left) {
+            levelEditor.placeTile(worldPos);
+        }
+        else if (event.mouseButton.button == sf::Mouse::Right) {
+            levelEditor.eraseTile(worldPos);
+        }
     }
 }
 
-void Update(float deltaTime)
-{
-    if (!gameInitialized) return;
+void Update(float deltaTime) {
+    gameTime += deltaTime;
 
+    if (!showLevelEditor) {
+        // Update player
+        player.update(deltaTime);
+
+        // Update camera to follow player
+        camera.setTarget(player.getPosition());
+    }
+
+    // Update camera
+    camera.update(deltaTime);
+}
+
+void Render(Renderer& renderer) {
     if (showLevelEditor) {
-        // Actualizar editor
-        levelEditor.Update(deltaTime);
-
-        // Sincronizar el mapa del juego con el editor si hay cambios
-        SyncMapWithEditor();
+        levelEditor.render(renderer);
     }
     else {
-        // Actualizar juego normal
-        player.update();
+        // Render game world
+        RenderGameWorld(renderer);
 
-        // Aplicar físicas del jugador con el mapa
-        Physics::HandlePlayerCollision(player, currentMap);
-
-        // Actualizar cámara
-        camera.update();
+        // Render player
+        player.render(renderer);
     }
 }
 
-void SyncMapWithEditor()
-{
-    // Sincronizar el mapa del juego con el grid del editor
-    if (levelEditor.GetGridWidth() != currentMap.grid[0].size() ||
-        levelEditor.GetGridHeight() != currentMap.grid.size()) {
-        // Redimensionar si es necesario
-        currentMap.grid.resize(levelEditor.GetGridHeight(),
-            std::vector<int>(levelEditor.GetGridWidth()));
-    }
-
-    // Copiar datos del editor al mapa del juego
-    for (int y = 0; y < levelEditor.GetGridHeight(); ++y) {
-        for (int x = 0; x < levelEditor.GetGridWidth(); ++x) {
-            currentMap.grid[y][x] = (int)levelEditor.GetTileAt(x, y);
-        }
-    }
-}
-
-void Render(Renderer& renderer)
-{
-    if (!gameInitialized) return;
-
-    if (showLevelEditor) {
-        // Renderizar editor
-        levelEditor.Render(renderer.GetTarget());
-    }
-    else {
-        // Renderizar mapa del juego
-        RenderMap(renderer);
-
-        // Renderizar jugador
-        player.render(renderer.GetTarget());
-    }
-}
-
-void RenderMap(Renderer& renderer)
-{
-    if (currentMap.grid.empty()) return;
-
-    // Obtener los límites de la cámara para renderizar solo los tiles visibles
-    sf::View currentView = renderer.GetTarget().getView();
-    sf::Vector2f center = currentView.getCenter();
-    sf::Vector2f size = currentView.getSize();
-
-    float left = center.x - size.x / 2.0f;
-    float right = center.x + size.x / 2.0f;
-    float top = center.y - size.y / 2.0f;
-    float bottom = center.y + size.y / 2.0f;
-
-    // Convertir a coordenadas de grid
-    int startX = std::max(0, (int)((left + 800.0f) / currentMap.cellSize));
-    int endX = std::min((int)currentMap.grid[0].size(), (int)((right + 800.0f) / currentMap.cellSize) + 1);
-    int startY = std::max(0, (int)((top + 480.0f) / currentMap.cellSize));
-    int endY = std::min((int)currentMap.grid.size(), (int)((bottom + 480.0f) / currentMap.cellSize) + 1);
-
-    // Renderizar tiles visibles
-    for (int y = startY; y < endY; ++y) {
-        for (int x = startX; x < endX; ++x) {
-            if (currentMap.grid[y][x] != 0) { // No renderizar tiles vacíos
-                sf::Vector2f worldPos = GetWorldPositionFromGrid(x, y);
-                RenderMapTile(renderer, currentMap.grid[y][x], worldPos);
-            }
-        }
-    }
-}
-
-void RenderMapTile(Renderer& renderer, int tileType, const sf::Vector2f& position)
-{
-    sf::Texture* texture = nullptr;
-    TileType type = static_cast<TileType>(tileType);
-
-    switch (type) {
-    case TileType::WALL:
-        texture = Resources::GetTexture("wall");
-        break;
-    case TileType::PLATFORM:
-        texture = Resources::GetTexture("platform");
-        break;
-    case TileType::SPIKES:
-        texture = Resources::GetTexture("spikes");
-        break;
-    case TileType::TORCH:
-        texture = Resources::GetTexture("torch");
-        break;
-    case TileType::DOOR:
-        texture = Resources::GetTexture("door");
-        break;
-    default:
-        // Para tiles del tileset
-        texture = Resources::GetTexture("tileset");
-        break;
-    }
-
+void RenderGameWorld(Renderer& renderer) {
+    // Render tiles from level data
+    // This is a basic implementation - you'll need to expand based on your level system
+    sf::Texture* texture = Resources::GetTexture("tileset");
     if (texture) {
-        renderer.Draw(*texture, position, sf::Vector2f(currentMap.cellSize, currentMap.cellSize));
-    }
-}
-
-sf::Vector2f GetWorldPositionFromGrid(int gridX, int gridY)
-{
-    float x = gridX * currentMap.cellSize - (currentMap.grid[0].size() * currentMap.cellSize) / 2.0f + currentMap.cellSize / 2.0f;
-    float y = gridY * currentMap.cellSize - (currentMap.grid.size() * currentMap.cellSize) / 2.0f + currentMap.cellSize / 2.0f;
-    return sf::Vector2f(x, y);
-}
-
-void RenderUI(sf::RenderWindow& window)
-{
-    if (!gameInitialized) return;
-
-    // Mostrar información de estado
-    static sf::Font font;
-    static sf::Text statusText;
-    static bool fontLoaded = false;
-
-    if (!fontLoaded) {
-        if (!font.loadFromFile("assets/arial.ttf")) {
-            // Usar fuente por defecto del sistema si no se encuentra arial.ttf
+        // Example: render a simple ground
+        for (int x = -10; x < 10; x++) {
+            sf::Vector2f position(static_cast<float>(x) * 32.0f, 200.0f);
+            renderer.Draw(*texture, position, sf::Vector2f(32.0f, 32.0f));
         }
-        statusText.setFont(font);
-        statusText.setCharacterSize(16);
-        statusText.setFillColor(sf::Color::White);
-        fontLoaded = true;
     }
+}
 
-    std::string status = "Dead Paradise\n";
-    status += "Player Position: (" + std::to_string((int)player.getPosition().x) + ", " + std::to_string((int)player.getPosition().y) + ")\n";
-    status += "Velocity: (" + std::to_string(player.getVelocity().x) + ", " + std::to_string(player.getVelocity().y) + ")\n";
-
+void RenderUI(sf::RenderWindow& window) {
     if (showLevelEditor) {
-        status += "LEVEL EDITOR MODE\n";
-        status += "Press TAB to return to game\n";
-    }
-    else {
-        status += "GAME MODE\n";
-        status += "Press TAB for Level Editor\n";
-        status += "WASD/Arrows: Move, Space: Jump\n";
-        status += "F5: Quick Save, F9: Quick Load\n";
+        levelEditor.renderUI(window);
     }
 
-    statusText.setString(status);
-    statusText.setPosition(10, 10);
-    window.draw(statusText);
+    // Render game UI (health, score, etc.)
+    // Add your UI rendering code here
+}
+
+// Placeholder implementations for missing functions
+void InitializeTileInfos() {
+    tileRenderer.InitializeTileInfos();
+}
+
+void RenderTorch(sf::RenderWindow& window, const sf::Vector2f& position, float animTime) {
+    tileRenderer.RenderTorch(window, position, animTime);
+}
+
+void GetTilesIndex() {
+    // Implementation for getting tile indices
+    // Add your logic here
+}
+
+void resetAnimationTimer() {
+    // Reset animation timer logic
+    gameTime = 0.0f;
+}
+
+void climb() {
+    // Player climbing logic
+    player.climb();
+}
+
+void update() {
+    // General update function
+    Update(1.0f / 60.0f); // Assume 60 FPS
 }

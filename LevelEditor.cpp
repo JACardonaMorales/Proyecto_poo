@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "LevelEditor.h"
 #include "TileRenderer.h"
 #include "Map.h"
@@ -31,9 +31,9 @@ void LevelEditor::Initialize()
     editorView.setSize(800.0f, 600.0f);
     editorView.setCenter(0.0f, 0.0f);
 
-    // TileRenderer ya maneja la inicialización de tile infos
+    // TileRenderer ya maneja la inicializaciï¿½n de tile infos
 
-    // Load textures - esto se puede mover también al TileRenderer
+    // Load textures - esto se puede mover tambiï¿½n al TileRenderer
     LoadTextures();
 
     // Setup UI
@@ -71,66 +71,66 @@ void LevelEditor::LoadTextures()
 
 void LevelEditor::CreatePlaceholderTextures()
 {
-	// Platform texture (mejorado)
-	if (!Resources::GetTexture("platform"))
-	{
-		sf::Texture platformTexture;
-		sf::Image platformImage;
-		platformImage.create(64, 16); // Más ancho que alto para plataformas
+    // Platform texture (mejorado)
+    if (!Resources::GetTexture("platform"))
+    {
+        sf::Texture platformTexture;
+        sf::Image platformImage;
+        platformImage.create(64, 16); // Mï¿½s ancho que alto para plataformas
 
-		// Crear patrón de madera más realista
-		sf::Color woodBase(139, 69, 19);
-		sf::Color woodLight(160, 82, 45);
-		sf::Color woodDark(101, 67, 33);
+        // Crear patrï¿½n de madera mï¿½s realista
+        sf::Color woodBase(139, 69, 19);
+        sf::Color woodLight(160, 82, 45);
+        sf::Color woodDark(101, 67, 33);
 
-		for (int x = 0; x < 64; ++x)
-		{
-			for (int y = 0; y < 16; ++y)
-			{
-				sf::Color pixelColor = woodBase;
+        for (int x = 0; x < 64; ++x)
+        {
+            for (int y = 0; y < 16; ++y)
+            {
+                sf::Color pixelColor = woodBase;
 
-				// Añadir variación
-				if (y == 0 || y == 1) pixelColor = woodLight; // Top highlight
-				if (y >= 14) pixelColor = woodDark; // Bottom shadow
-				if (x % 8 == 0) pixelColor = woodDark; // Vertical lines
+                // Aï¿½adir variaciï¿½n
+                if (y == 0 || y == 1) pixelColor = woodLight; // Top highlight
+                if (y >= 14) pixelColor = woodDark; // Bottom shadow
+                if (x % 8 == 0) pixelColor = woodDark; // Vertical lines
 
-				platformImage.setPixel(x, y, pixelColor);
-			}
-		}
+                platformImage.setPixel(x, y, pixelColor);
+            }
+        }
 
-		platformTexture.loadFromImage(platformImage);
-		Resources::AddTexture("platform", platformTexture);
-	}
+        platformTexture.loadFromImage(platformImage);
+        Resources::AddTexture("platform", platformTexture);
+    }
 
-	// Wall texture (mejorado)
-	if (!Resources::GetTexture("wall"))
-	{
-		sf::Texture wallTexture;
-		sf::Image wallImage;
-		wallImage.create(32, 32);
+    // Wall texture (mejorado)
+    if (!Resources::GetTexture("wall"))
+    {
+        sf::Texture wallTexture;
+        sf::Image wallImage;
+        wallImage.create(32, 32);
 
-		// Crear patrón de piedra
-		sf::Color stoneBase(100, 100, 100);
-		sf::Color stoneLight(130, 130, 130);
-		sf::Color stoneDark(70, 70, 70);
+        // Crear patrï¿½n de piedra
+        sf::Color stoneBase(100, 100, 100);
+        sf::Color stoneLight(130, 130, 130);
+        sf::Color stoneDark(70, 70, 70);
 
-		for (int x = 0; x < 32; ++x)
-		{
-			for (int y = 0; y < 32; ++y)
-			{
-				sf::Color pixelColor = stoneBase;
+        for (int x = 0; x < 32; ++x)
+        {
+            for (int y = 0; y < 32; ++y)
+            {
+                sf::Color pixelColor = stoneBase;
 
-				// Crear patrón de bloques de piedra
-				if ((x + y) % 8 < 2) pixelColor = stoneDark;
-				if (x % 16 == 0 || y % 16 == 0) pixelColor = stoneLight;
+                // Crear patrï¿½n de bloques de piedra
+                if ((x + y) % 8 < 2) pixelColor = stoneDark;
+                if (x % 16 == 0 || y % 16 == 0) pixelColor = stoneLight;
 
-				wallImage.setPixel(x, y, pixelColor);
-			}
-		}
+                wallImage.setPixel(x, y, pixelColor);
+            }
+        }
 
-		wallTexture.loadFromImage(wallImage);
-		Resources::AddTexture("wall", wallTexture);
-	}
+        wallTexture.loadFromImage(wallImage);
+        Resources::AddTexture("wall", wallTexture);
+    }
 }
 
 std::string LevelEditor::GetTextureNameForTileType(TileType type) const
@@ -368,7 +368,7 @@ void LevelEditor::SetCurrentTile(TileType type)
     currentTileType = type;
 }
 
-// Usa este método en lugar de verificar manualmente:
+// Usa este mï¿½todo en lugar de verificar manualmente:
 void LevelEditor::PlaceTile(int x, int y)
 {
     if (IsValidGridPosition(x, y)) {
@@ -404,7 +404,7 @@ bool LevelEditor::HasCollisionAt(int x, int y) const
 
 bool LevelEditor::IsValidGridPosition(int x, int y) const
 {
-	return x >= 0 && x < gridWidth && y >= 0 && y < gridHeight;
+    return x >= 0 && x < gridWidth && y >= 0 && y < gridHeight;
 }
 
 

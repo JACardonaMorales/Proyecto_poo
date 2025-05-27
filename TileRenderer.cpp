@@ -1,119 +1,120 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "TileRenderer.h"
 #include "Resources.h"
-#include "LevelEditor.h"
-#include "Game.h"
 
-void TileRenderer::InitializeTileInfos()
-{
-	tileInfos.clear();
-	// Copia exacta del código de LevelEditor::InitializeTileInfos()
-	tileInfos.push_back(TileInfo(TileType::EMPTY, false, false, sf::Vector2i(0, 0), ""));
-	tileInfos.push_back(TileInfo(TileType::WALL, true, false, sf::Vector2i(0, 0), "wall"));
-	tileInfos.push_back(TileInfo(TileType::PLATFORM, true, false, sf::Vector2i(0, 0), "platform"));
-	tileInfos.push_back(TileInfo(TileType::SPIKES, true, false, sf::Vector2i(0, 0), "spikes"));
-	tileInfos.push_back(TileInfo(TileType::TORCH, false, true, sf::Vector2i(0, 0), "torch"));
-	tileInfos.push_back(TileInfo(TileType::DOOR, true, false, sf::Vector2i(0, 0), "door"));
+void TileRenderer::InitializeTileInfos() {
+    // Clear existing tile infos
+    tileInfos.clear();
 
-	// Tileset blocks
-	tileInfos.push_back(TileInfo(TileType::BLOCK_TOP_LEFT, true, false, sf::Vector2i(0, 0), "tileset"));
-	tileInfos.push_back(TileInfo(TileType::BLOCK_TOP, true, false, sf::Vector2i(1, 0), "tileset"));
-	tileInfos.push_back(TileInfo(TileType::BLOCK_TOP_RIGHT, true, false, sf::Vector2i(2, 0), "tileset"));
-	tileInfos.push_back(TileInfo(TileType::BLOCK_LEFT, true, false, sf::Vector2i(0, 1), "tileset"));
-	tileInfos.push_back(TileInfo(TileType::BLOCK_CENTER, true, false, sf::Vector2i(1, 1), "tileset"));
-	tileInfos.push_back(TileInfo(TileType::BLOCK_RIGHT, true, false, sf::Vector2i(2, 1), "tileset"));
-	tileInfos.push_back(TileInfo(TileType::BLOCK_BOTTOM_LEFT, true, false, sf::Vector2i(0, 2), "tileset"));
-	tileInfos.push_back(TileInfo(TileType::BLOCK_BOTTOM, true, false, sf::Vector2i(1, 2), "tileset"));
-	tileInfos.push_back(TileInfo(TileType::BLOCK_BOTTOM_RIGHT, true, false, sf::Vector2i(2, 2), "tileset"));
+    // Initialize basic tiles
+    tileInfos.emplace_back(TileType::EMPTY, false, false, sf::Vector2i(0, 0), "");
+    tileInfos.emplace_back(TileType::WALL, true, false, sf::Vector2i(0, 0), "tileset");
+    tileInfos.emplace_back(TileType::PLATFORM, true, false, sf::Vector2i(1, 0), "tileset");
+    tileInfos.emplace_back(TileType::SPIKES, true, false, sf::Vector2i(2, 0), "tileset");
+    tileInfos.emplace_back(TileType::TORCH, false, true, sf::Vector2i(3, 0), "tileset");
+    tileInfos.emplace_back(TileType::DOOR, true, false, sf::Vector2i(4, 0), "tileset");
 
-	// Shadow variations
-	tileInfos.push_back(TileInfo(TileType::BLOCK_SHADOW_LEFT, false, false, sf::Vector2i(3, 0), "tileset"));
-	tileInfos.push_back(TileInfo(TileType::BLOCK_SHADOW_RIGHT, false, false, sf::Vector2i(3, 1), "tileset"));
-	tileInfos.push_back(TileInfo(TileType::BLOCK_SHADOW_BOTTOM, false, false, sf::Vector2i(3, 2), "tileset"));
-	tileInfos.push_back(TileInfo(TileType::BLOCK_SHADOW_CORNER, false, false, sf::Vector2i(3, 3), "tileset"));
+    // Initialize tileset blocks
+    tileInfos.emplace_back(TileType::BLOCK_TOP_LEFT, true, false, sf::Vector2i(0, 1), "tileset");
+    tileInfos.emplace_back(TileType::BLOCK_TOP, true, false, sf::Vector2i(1, 1), "tileset");
+    tileInfos.emplace_back(TileType::BLOCK_TOP_RIGHT, true, false, sf::Vector2i(2, 1), "tileset");
+    tileInfos.emplace_back(TileType::BLOCK_LEFT, true, false, sf::Vector2i(0, 2), "tileset");
+    tileInfos.emplace_back(TileType::BLOCK_CENTER, true, false, sf::Vector2i(1, 2), "tileset");
+    tileInfos.emplace_back(TileType::BLOCK_RIGHT, true, false, sf::Vector2i(2, 2), "tileset");
+    tileInfos.emplace_back(TileType::BLOCK_BOTTOM_LEFT, true, false, sf::Vector2i(0, 3), "tileset");
+    tileInfos.emplace_back(TileType::BLOCK_BOTTOM, true, false, sf::Vector2i(1, 3), "tileset");
+    tileInfos.emplace_back(TileType::BLOCK_BOTTOM_RIGHT, true, false, sf::Vector2i(2, 3), "tileset");
+
+    // Initialize shadow blocks
+    tileInfos.emplace_back(TileType::BLOCK_SHADOW_LEFT, false, false, sf::Vector2i(3, 1), "tileset");
+    tileInfos.emplace_back(TileType::BLOCK_SHADOW_RIGHT, false, false, sf::Vector2i(4, 1), "tileset");
+    tileInfos.emplace_back(TileType::BLOCK_SHADOW_BOTTOM, false, false, sf::Vector2i(3, 2), "tileset");
+    tileInfos.emplace_back(TileType::BLOCK_SHADOW_CORNER, false, false, sf::Vector2i(4, 2), "tileset");
 }
 
-void TileRenderer::RenderTile(sf::RenderWindow& window, TileType type, const sf::Vector2f& position, float animTime)
-{
-	if (type == TileType::TORCH) {
-		RenderTorch(window, position, animTime);
-		return;
-	}
+void TileRenderer::RenderTile(sf::RenderWindow& window, TileType type, const sf::Vector2f& position, float animTime) {
+    if (type == TileType::EMPTY) {
+        return;
+    }
 
-	for (const auto& tileInfo : tileInfos) {
-		if (tileInfo.type == type && !tileInfo.textureName.empty()) {
-			sf::Texture* texture = Resources::GetTexture(tileInfo.textureName);
-			if (texture) {
-				sf::Sprite sprite;
-				sprite.setTexture(*texture);
+    if (type == TileType::TORCH) {
+        RenderTorch(window, position, animTime);
+        return;
+    }
 
-				if (tileInfo.textureName == "tileset") {
-					sf::IntRect rect = GetTilesetRect(type);
-					sprite.setTextureRect(rect);
-				}
+    sf::Texture* texture = Resources::GetTexture("tileset");
+    if (!texture) {
+        return;
+    }
 
-				sprite.setOrigin(sprite.getLocalBounds().width / 2.0f, sprite.getLocalBounds().height / 2.0f);
-				sprite.setPosition(position);
+    sf::Sprite sprite;
+    sprite.setTexture(*texture);
 
-				// Scale to fit tile size - CRUCIAL PARA CONSISTENCIA
-				float scaleX = tileSize / sprite.getLocalBounds().width;
-				float scaleY = tileSize / sprite.getLocalBounds().height;
-				sprite.setScale(scaleX, scaleY);
+    // Get the tile rectangle from tileset
+    sf::IntRect tileRect = GetTilesetRect(type);
+    sprite.setTextureRect(tileRect);
 
-				window.draw(sprite);
-			}
-			break;
-		}
-	}
+    // Set position and scale
+    sprite.setPosition(position);
+
+    // Scale to fit tile size
+    float scaleX = tileSize / static_cast<float>(tileRect.width);
+    float scaleY = tileSize / static_cast<float>(tileRect.height);
+    sprite.setScale(scaleX, scaleY);
+
+    window.draw(sprite);
 }
 
-void TileRenderer::RenderTorch(sf::RenderWindow& window, const sf::Vector2f& position, float animTime)
-{
-	sf::Texture* texture = Resources::GetTexture("torch");
-	if (texture) {
-		sf::Sprite sprite;
-		sprite.setTexture(*texture);
+void TileRenderer::RenderTorch(sf::RenderWindow& window, const sf::Vector2f& position, float animTime) {
+    sf::Texture* texture = Resources::GetTexture("tileset");
+    if (!texture) {
+        return;
+    }
 
-		// Calculate animation frame (assuming 8 frames horizontally)
-		int frameWidth = texture->getSize().x / 8;
-		int frameHeight = texture->getSize().y;
-		int currentFrame = (int)(animTime * 8.0f) % 8;
+    sf::Sprite sprite;
+    sprite.setTexture(*texture);
 
-		sf::IntRect frameRect(currentFrame * frameWidth, 0, frameWidth, frameHeight);
-		sprite.setTextureRect(frameRect);
+    // Animate torch - cycle through frames
+    int frameCount = 4; // Assume 4 animation frames
+    int currentFrame = static_cast<int>(animTime * 8.0f) % frameCount; // 8 fps animation
 
-		sprite.setOrigin(frameWidth / 2.0f, frameHeight / 2.0f);
-		sprite.setPosition(position);
+    sf::IntRect torchRect = GetTilesetRect(TileType::TORCH);
+    torchRect.left += currentFrame * torchRect.width;
 
-		// Scale to fit tile size
-		float scaleX = tileSize / frameWidth;
-		float scaleY = tileSize / frameHeight;
-		sprite.setScale(scaleX, scaleY);
+    sprite.setTextureRect(torchRect);
+    sprite.setPosition(position);
 
-		window.draw(sprite);
-	}
+    float scaleX = tileSize / static_cast<float>(torchRect.width);
+    float scaleY = tileSize / static_cast<float>(torchRect.height);
+    sprite.setScale(scaleX, scaleY);
+
+    window.draw(sprite);
 }
 
-sf::IntRect TileRenderer::GetTilesetRect(TileType type) const
-{
-	for (const auto& tileInfo : tileInfos) {
-		if (tileInfo.type == type) {
-			int tileWidth = 32;
-			int tileHeight = 32;
-			return sf::IntRect(
-				tileInfo.textureCoord.x * tileWidth,
-				tileInfo.textureCoord.y * tileHeight,
-				tileWidth,
-				tileHeight
-			);
-		}
-	}
-	return sf::IntRect(0, 0, 32, 32);
+sf::IntRect TileRenderer::GetTilesetRect(TileType type) const {
+    // Find tile info for the given type
+    for (const auto& tileInfo : tileInfos) {
+        if (tileInfo.type == type) {
+            // Assuming each tile is 32x32 pixels in the tileset
+            int tilePixelSize = 32;
+            return sf::IntRect(
+                tileInfo.textureCoord.x * tilePixelSize,
+                tileInfo.textureCoord.y * tilePixelSize,
+                tilePixelSize,
+                tilePixelSize
+            );
+        }
+    }
+
+    // Default rectangle if tile type not found
+    return sf::IntRect(0, 0, 32, 32);
 }
 
-sf::Vector2f TileRenderer::GetWorldPosition(int gridX, int gridY, int gridWidth, int gridHeight) const
-{
-	float x = gridX * tileSize - (gridWidth * tileSize) / 2.0f + tileSize / 2.0f;
-	float y = gridY * tileSize - (gridHeight * tileSize) / 2.0f + tileSize / 2.0f;
-	return sf::Vector2f(x, y);
+sf::Vector2f TileRenderer::GetWorldPosition(int gridX, int gridY, int gridWidth, int gridHeight) const {
+    // Convert grid coordinates to world coordinates
+    // Center the grid around origin
+    float worldX = (static_cast<float>(gridX) - static_cast<float>(gridWidth) * 0.5f) * tileSize;
+    float worldY = (static_cast<float>(gridY) - static_cast<float>(gridHeight) * 0.5f) * tileSize;
+
+    return sf::Vector2f(worldX, worldY);
 }

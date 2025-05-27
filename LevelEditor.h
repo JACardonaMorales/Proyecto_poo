@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "Types.h"
 
 class Map;
@@ -28,7 +28,7 @@ public:
     TileType GetTileAt(int x, int y) const;
     bool HasCollisionAt(int x, int y) const;
 
-    // Método mejorado para validar posiciones de grid:
+    // Mï¿½todo mejorado para validar posiciones de grid:
     bool IsValidGridPosition(int x, int y) const;
 
 
@@ -44,12 +44,12 @@ public:
     int GetGridHeight() const { return gridHeight; }
     float GetTileSize() const { return tileSize; }
 
-    // Métodos de acceso necesarios para Game.cpp
+    // Mï¿½todos de acceso necesarios para Game.cpp
     void SetActive(bool active) { isActive = active; }
     bool IsActive() const { return isActive; }
 
 
-    // Método para renderizar usando RenderWindow directamente
+    // Mï¿½todo para renderizar usando RenderWindow directamente
     void Render(sf::RenderTarget& target) {
         sf::RenderWindow* window = dynamic_cast<sf::RenderWindow*>(&target);
         if (window) {
@@ -67,7 +67,7 @@ private:
 
     // Editor state
     TileType currentTileType;
-   
+
     bool showGrid;
     bool isPainting;
     bool isErasing;

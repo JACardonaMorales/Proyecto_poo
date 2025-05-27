@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <SFML/Graphics.hpp>
 
 enum PLAYER_ANIMATION_STATES {
@@ -55,19 +55,19 @@ public:
 
 	//Inline functions
 
-	// Métodos adicionales necesarios para el sistema de físicas
+	// Mï¿½todos adicionales necesarios para el sistema de fï¿½sicas
 	void setIsOnGround(bool onGround) { isOnGround = onGround; }
 	void setCanJump(bool canJump) { this->canJump = canJump; }
 	void setIsOnPlatform(bool onPlatform) { isOnPlatform = onPlatform; }
-	
+
 
 	// Getters adicionales
 	bool getIsOnGround() const { return isOnGround; }
 	bool getCanJump() const { return canJump; }
 	bool getIsOnPlatform() const { return isOnPlatform; }
-	
 
-	// Método para establecer posición individual
+
+	// Mï¿½todo para establecer posiciï¿½n individual
 
 	void setPosition(const sf::Vector2f& position) { sprite.setPosition(position); }
 
