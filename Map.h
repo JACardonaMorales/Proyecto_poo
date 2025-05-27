@@ -1,11 +1,10 @@
 #pragma once
-#include <SFML/Graphics.hpp>
-#include <vector>
-#include "LevelEditor.h"
-#include "Renderer.h"
+#include "Types.h"
 
 // Forward declarations
 class LevelEditor;
+class Renderer;
+
 
 class Map
 {

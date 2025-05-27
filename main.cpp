@@ -82,7 +82,7 @@ int main()
         window.setView(gameView);
 
         // Clear window
-        window.clear(sf::Color(50, 50, 80)); // Dark blue background
+        window.clear(sf::Color(0, 0, 0)); // Dark background
 
         // Render game objects
         Render(renderer);

@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "LevelEditor.h"
+#include "TileRenderer.h"
+#include "Map.h"
 #include "Resources.h"
 #include "Camera.h"
 
@@ -398,6 +400,11 @@ bool LevelEditor::HasCollisionAt(int x, int y) const
         }
     }
     return false;
+}
+
+bool LevelEditor::IsValidGridPosition(int x, int y) const
+{
+	return x >= 0 && x < gridWidth && y >= 0 && y < gridHeight;
 }
 
 

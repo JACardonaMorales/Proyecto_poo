@@ -1,5 +1,8 @@
 #include "stdafx.h"
 #include "TileRenderer.h"
+#include "Resources.h"
+#include "LevelEditor.h"
+#include "Game.h"
 
 void TileRenderer::InitializeTileInfos()
 {
