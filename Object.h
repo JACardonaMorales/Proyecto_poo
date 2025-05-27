@@ -1,5 +1,4 @@
-#ifndef OBJECT_H
-#define OBJECT_H
+#pragma once
 
 class Object {
 public:
@@ -10,4 +9,3 @@ public:
     Object(float x, float y, float horizontal_speed, float vertical_speed);
 };
 
-#endif

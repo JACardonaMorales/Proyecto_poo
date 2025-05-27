@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Global.h"
 #include "Ray.h"
 #include "MapManager.h"
 #include <SFML/Window.hpp>

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Global.h"
 #include "Life.h"
 #include "MapManager.h"
 

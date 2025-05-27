@@ -1,10 +1,10 @@
-#include "stdafx.h"
+#include "Global.h"
 #include "Infected_Ant.h"
 #include "MapManager.h"
 #include "Ray.h"
 
 Infected_Ant::Infected_Ant(bool attacks, float x, float y)
-    : Enemy(x, y), walk_animation(16, "assets/Infected_Ant/enemies_walk_animation.png", 12),
+    : Enemy(x, y), walk_animation(16, "assets/Infected_Ant/enemys_walk_animation.png", 3),
     attacks(attacks), no_collision_dying(false), death_timer(0) {
 
     if (!texture.loadFromFile("assets/Infected_Ant/stand_animation-Sheet.png")) {

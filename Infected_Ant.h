@@ -1,7 +1,7 @@
-#ifndef INFECTED_ANT_H
-#define INFECTED_ANT_H
+#pragma once
 
-#include "stdafx.h"
+
+#include "Global.h"
 #include "Enemy.h"
 #include "Animation.h"
 #include <SFML/Graphics.hpp>
@@ -23,5 +23,3 @@ public:
     void update(float view_x, std::vector<std::shared_ptr<Enemy>>& enemies,
         MapManager& map_manager, Ray& ray) override;
 };
-
-#endif

@@ -1,5 +1,5 @@
-#ifndef ENEMY_H
-#define ENEMY_H
+#pragma once
+
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -29,5 +29,3 @@ public:
     float get_x() const { return x; }
     float get_y() const { return y; }
 };
-
-#endif

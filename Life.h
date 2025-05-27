@@ -1,5 +1,5 @@
-#ifndef LIFE_H
-#define LIFE_H
+#pragma once
+
 
 #include <SFML/Graphics.hpp>
 
@@ -23,5 +23,3 @@ public:
     void update(float view_x, MapManager& map_manager);
     sf::FloatRect get_hit_box() const;
 };
-
-#endif

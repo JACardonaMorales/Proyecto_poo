@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Global.h"
 #include "ReyHongo.h"
 #include "MapManager.h"
 #include "Ray.h"

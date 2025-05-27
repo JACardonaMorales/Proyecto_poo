@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Global.h"
 #include "Object.h"
 
 Object::Object(float x, float y, float horizontal_speed, float vertical_speed)

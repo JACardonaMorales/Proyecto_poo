@@ -1,7 +1,6 @@
-#ifndef RAY_H
-#define RAY_H
+#pragma once
 
-#include "stdafx.h"
+#include "Global.h"
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include "Animation.h"
@@ -46,5 +45,3 @@ public:
     void update(float view_x, MapManager& map_manager);
     sf::FloatRect get_hit_box() const;
 };
-
-#endif

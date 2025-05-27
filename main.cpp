@@ -1,8 +1,8 @@
-#include "stdafx.h"
+#include "Global.h"
 #include "Ray.h"
 #include "MapManager.h"
 #include "Enemy.h"
-#include "Global.h"
+
 
 int main() {
     // Create the main window

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Global.h"
 #include "Enemy.h"
 
 Enemy::Enemy(float x, float y)

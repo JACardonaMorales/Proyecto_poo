@@ -1,18 +1,41 @@
-#ifndef GLOBAL_H
-#define GLOBAL_H
+#pragma once
 
-#include <SFML/Graphics.hpp>
+
+#include <cstdlib>
+#include <ctime>
+#include <time.h>
+#include <string>
 #include <vector>
+#include <unordered_map>
+#include <SFML/Audio.hpp>
+#include <SFML/Network.hpp>
+#include <SFML/Window.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFML/System.hpp>
+#include <iostream>
+#include <filesystem>
+#include <initializer_list>
+#include <fstream>
+#include <sstream>
 
-enum class Cell {
-    Light,
-    Grass,
-    Life,
-    Empty,
-    Entrance,
-    Prock,
-    Wall
+// Constantes del juego
+constexpr unsigned short CELL_SIZE = 32; // Tamaño de cada celda en píxeles
+constexpr unsigned short SCREEN_WIDTH = 640;
+constexpr unsigned short SCREEN_HEIGHT = 480;
+
+// Enumeración para los tipos de celdas
+enum class Cell
+{
+	Empty,
+	Ground,    // Tierra
+	Door,      // Puerta
+	Spikes,		// Espinas
+	Torch_Animation, // Animación de antorcha
+	
 };
+
+// Tipo de mapa
+typedef std::vector<std::vector<Cell>> Map;
 
 // Forward declarations
 class MapManager;
@@ -29,4 +52,3 @@ void draw_map(float view_x, const sf::Image& map_sketch, sf::RenderWindow& windo
 unsigned char map_collision(float x, float y, const std::vector<Cell>& check_cells,
     const std::vector<std::vector<Cell>>& map);
 
-#endif

@@ -1,8 +1,8 @@
-#include "stdafx.h"
+#include "Global.h"
 #include "MapManager.h"
 
 MapManager::MapManager()
-    : coin_animation(16, "textures/coin.png", 8),
+    : Torch_Animation(16, "textures/coin.png", 8),
     question_block_animation(16, "textures/question_block.png", 16) {
 
     if (!map_texture.loadFromFile("textures/tileset.png")) {

@@ -1,7 +1,6 @@
 #ifndef REYHONGO_H
 #define REYHONGO_H
 
-#include "stdafx.h"
 #include "Enemy.h"
 #include "Animation.h"
 #include <SFML/Graphics.hpp>

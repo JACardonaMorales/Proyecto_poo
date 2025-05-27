@@ -1,4 +1,4 @@
-#include "stdafx.h"
+
 #include "Animation.h"
 
 Animation::Animation(unsigned short frame_width, const std::string& texture_location, unsigned short animation_speed)
