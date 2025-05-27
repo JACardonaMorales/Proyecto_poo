@@ -1,162 +1,190 @@
-// Ejemplo de integración en Game.cpp
-
 #include "stdafx.h"
 #include "Game.h"
-#include "Physics.h"
+#include "SpriteLoader.h"
 
-// Variables globales
+// Global instances
+Camera camera(5.0f);
 Player player;
-Map gameMap;
-LevelEditor levelEditor(gameMap);
-Camera camera;
-void handlePlayerDamage(TileType damageSource);
+Map gameMap(32.0f);
+LevelEditor levelEditor;
+bool showLevelEditor = false;
 
-void init(const sf::Window& window) {
-    gameMap.createBoard(50, 30); // Crear un mapa de 50x30
+void init(const sf::Window& window)
+{
+    // Initialize SpriteLoader and load resources
+    SpriteLoader& spriteLoader = SpriteLoader::getInstance();
 
-    // Cargar nivel por defecto o crear uno nuevo
-    // gameMap.InitFromImage(someImage);
-}
+    // Load platform sprite (try to load from file, fallback to default)
+    spriteLoader.LoadPlatformSprite("assets/sprites/platform.png");
 
-void HandleInput(const sf::Event& event, const sf::RenderWindow& window) {
-    // Manejar input del editor de niveles
-    levelEditor.HandleInput(event, window);
+    // Load other sprites
+    spriteLoader.LoadSprite("wall", "assets/sprites/wall.png");
+    spriteLoader.LoadSprite("spikes", "assets/sprites/spike.png");
+    spriteLoader.LoadSprite("door", "assets/sprites/door.png");
 
-    // Si estamos en modo editor, no procesar input del jugador
-    if (levelEditor.IsEditorMode()) {
-        return;
+    // Load tileset
+    spriteLoader.LoadTileset("assets/sprites/tileset.png", 16, 16);
+
+    // Register torch animation
+    SpriteLoader::AnimationData torchAnim;
+    torchAnim.textureName = "torch";
+    torchAnim.frameCount = 8;
+    torchAnim.frameWidth = 16;
+    torchAnim.frameHeight = 32;
+    torchAnim.frameTime = 0.125f; // 8 FPS
+    torchAnim.loop = true;
+    spriteLoader.RegisterAnimation("torch_burn", torchAnim);
+
+    // Load torch spritesheet
+    spriteLoader.LoadSprite("torch", "assets/sprites/torch.png");
+
+    // Initialize level editor
+    levelEditor.Initialize();
+
+    // Create a default level or load existing one
+    gameMap.createBoard(50, 30);
+
+    // Try to load a level file if it exists
+    if (std::filesystem::exists("level.txt")) {
+        levelEditor.LoadLevel("level.txt");
+        // Copy level editor data to game map
+        const auto& editorGrid = levelEditor.GetGrid();
+        gameMap.createBoard(levelEditor.GetGridWidth(), levelEditor.GetGridHeight());
+
+        for (int y = 0; y < levelEditor.GetGridHeight(); ++y) {
+            for (int x = 0; x < levelEditor.GetGridWidth(); ++x) {
+                gameMap.grid[y][x] = static_cast<int>(editorGrid[y][x]);
+            }
+        }
     }
 
-    // Input del jugador
+    // Set initial player position
+    player.setPosition(0.0f, -200.0f);
+
+    std::cout << "Game initialized successfully!" << std::endl;
+}
+
+void HandleInput(const sf::Event& event, const sf::RenderWindow& window)
+{
+    // Toggle level editor
     if (event.type == sf::Event::KeyPressed) {
-        switch (event.key.code) {
-        case sf::Keyboard::F1:
-            levelEditor.SetEditorMode(true);
-            break;
-        case sf::Keyboard::R:
-            // Reiniciar jugador
-            player.setPosition(100, 100);
-            break;
+        if (event.key.code == sf::Keyboard::Tab) {
+            showLevelEditor = !showLevelEditor;
+            std::cout << "Level Editor " << (showLevelEditor ? "ON" : "OFF") << std::endl;
+        }
+
+        // Quick save/load when not in editor
+        if (!showLevelEditor) {
+            if (event.key.code == sf::Keyboard::F5) {
+                levelEditor.SaveLevel("quicksave.txt");
+                std::cout << "Quick saved to quicksave.txt" << std::endl;
+            }
+            if (event.key.code == sf::Keyboard::F9) {
+                levelEditor.LoadLevel("quicksave.txt");
+                SyncMapWithEditor();
+                std::cout << "Quick loaded from quicksave.txt" << std::endl;
+            }
         }
     }
-}
 
-void Update(float deltaTime) {
-    if (levelEditor.IsEditorMode()) {
-        levelEditor.Update(deltaTime);
-        return;
-    }
-
-    // Actualizar jugador
-    player.update();
-
-    // Verificar colisiones
-    CollisionInfo collision = Physics::CheckCollision(player, gameMap);
-
-    if (collision.hasCollision) {
-        // Aplicar corrección de posición
-        sf::Vector2f currentPos = player.getPosition();
-        player.setPosition(currentPos.x + collision.correctionVector.x,
-            currentPos.y + collision.correctionVector.y);
-
-        // Actualizar estados del jugador basado en la colisión
-        player.setIsOnGround(collision.isGrounded);
-        player.setIsOnPlatform(collision.isOnPlatform);
-        player.setIsOnLadder(collision.isOnLadder);
-
-        // Si hay corrección vertical, resetear velocidad Y
-        if (collision.correctionVector.y != 0) {
-            player.resetVelocityY();
-        }
+    // Handle level editor input
+    if (showLevelEditor) {
+        levelEditor.HandleInput(event, window);
     }
     else {
-        // No hay colisión, el jugador no está en el suelo
-        player.setIsOnGround(false);
-        player.setIsOnPlatform(false);
-        player.setIsOnLadder(false);
+        // Handle normal game input here
+        // Player movement will be handled in Update()
     }
-
-    // Verificar daño
-    if (collision.takeDamage) {
-        // Implementar lógica de daño
-        handlePlayerDamage(collision.tileType);
-    }
-
-    // Actualizar cámara para seguir al jugador
-    camera.position = player.getPosition();
 }
 
-void Render(Renderer& renderer) {
-    // Dibujar mapa
+void Update(float deltaTime)
+{
+    if (showLevelEditor) {
+        levelEditor.Update(deltaTime);
+
+        // Sync map with level editor changes
+        SyncMapWithEditor();
+    }
+    else {
+        // Update player
+        player.update();
+
+        // Update camera to follow player
+        camera.position = player.getPosition();
+
+        // Simple boundary check
+        sf::Vector2f playerPos = player.getPosition();
+        float mapWidth = gameMap.grid.empty() ? 0 : gameMap.grid[0].size() * gameMap.cellSize;
+        float mapHeight = gameMap.grid.size() * gameMap.cellSize;
+
+        // Keep camera within reasonable bounds
+        camera.position.x = std::max(-mapWidth / 2.0f, std::min(mapWidth / 2.0f, camera.position.x));
+        camera.position.y = std::max(-mapHeight / 2.0f, std::min(mapHeight / 2.0f, camera.position.y));
+    }
+}
+
+void Render(Renderer& renderer)
+{
+    // Always render the map
     gameMap.Draw(renderer);
 
-    // Dibujar jugador
-    // renderer.Draw(...) // Implementar según tu sistema de renderizado
-
-    // Dibujar editor si está activo
-    if (levelEditor.IsEditorMode()) {
-        levelEditor.Draw(renderer);
+    if (!showLevelEditor) {
+        // Render player when not in editor mode
+        // Note: Player render needs to be adapted to work with Renderer class
+        // For now, we'll skip player rendering in this context
+        // player.render(target); // This would need the actual render target
     }
 }
 
-void RenderUI(sf::RenderWindow& window) {
-    if (levelEditor.IsEditorMode()) {
-        levelEditor.DrawUI(window);
+void RenderUI(sf::RenderWindow& window)
+{
+    if (showLevelEditor) {
+        levelEditor.Render(window);
+    }
+    else {
+        // Render game UI
+        sf::Font font;
+        sf::Text gameInfo;
+
+        // Try to load font, use default if failed
+        if (font.loadFromFile("assets/font.ttf")) {
+            gameInfo.setFont(font);
+        }
+
+        gameInfo.setCharacterSize(16);
+        gameInfo.setFillColor(sf::Color::White);
+        gameInfo.setPosition(10, 10);
+
+        sf::Vector2f playerPos = player.getPosition();
+        std::string info = "Player Position: (" +
+            std::to_string((int)playerPos.x) + ", " +
+            std::to_string((int)playerPos.y) + ")\n";
+        info += "Controls: WASD - Move, Space - Jump, Tab - Toggle Editor\n";
+        info += "F5 - Quick Save, F9 - Quick Load";
+
+        gameInfo.setString(info);
+        window.draw(gameInfo);
+    }
+}
+
+void SyncMapWithEditor()
+{
+    // Copy level editor data to game map
+    const auto& editorGrid = levelEditor.GetGrid();
+    int editorWidth = levelEditor.GetGridWidth();
+    int editorHeight = levelEditor.GetGridHeight();
+
+    // Resize game map if needed
+    if (gameMap.grid.empty() ||
+        gameMap.grid[0].size() != editorWidth ||
+        gameMap.grid.size() != editorHeight) {
+        gameMap.createBoard(editorWidth, editorHeight);
     }
 
-    // Dibujar UI del juego (vida, puntuación, etc.)
-    // ...
-}
-
-void handlePlayerDamage(TileType damageSource) {
-    switch (damageSource) {
-    case TileType::SPIKE:
-        // Lógica específica para daño de pinchos
-        std::cout << "Player hit spikes!" << std::endl;
-        // Reducir vida, reiniciar posición, etc.
-        break;
-    default:
-        break;
-    }
-}
-
-// Funciones de utilidad adicionales
-void SaveCurrentLevel() {
-    levelEditor.SaveLevel("current_level.dat");
-}
-
-void LoadLevel(const std::string& filename) {
-    levelEditor.LoadLevel(filename);
-}
-
-void CreateTestLevel() {
-    // Crear un nivel de prueba con diferentes tipos de tiles
-    gameMap.createBoard(20, 15);
-    levelEditor.ClearLevel();
-
-    // Agregar algunos tiles de ejemplo
-    gameMap.grid[10][5] = static_cast<int>(TileType::SOLID_BLOCK);
-    gameMap.grid[10][6] = static_cast<int>(TileType::PLATFORM);
-    gameMap.grid[9][7] = static_cast<int>(TileType::SPIKE);
-    gameMap.grid[8][8] = static_cast<int>(TileType::TORCH);
-    gameMap.grid[10][10] = static_cast<int>(TileType::DOOR);
-
-    // Crear una pequeña estructura con el tileset
-    for (int x = 12; x < 15; x++) {
-        for (int y = 8; y < 11; y++) {
-            TileType tileType = TileType::BLOCK_CENTER;
-
-            // Esquinas y bordes
-            if (x == 12 && y == 8) tileType = TileType::BLOCK_TOP_LEFT;
-            else if (x == 14 && y == 8) tileType = TileType::BLOCK_TOP_RIGHT;
-            else if (x == 12 && y == 10) tileType = TileType::BLOCK_BOTTOM_LEFT;
-            else if (x == 14 && y == 10) tileType = TileType::BLOCK_BOTTOM_RIGHT;
-            else if (y == 8) tileType = TileType::BLOCK_TOP;
-            else if (y == 10) tileType = TileType::BLOCK_BOTTOM;
-            else if (x == 12) tileType = TileType::BLOCK_LEFT;
-            else if (x == 14) tileType = TileType::BLOCK_RIGHT;
-
-            gameMap.grid[y][x] = static_cast<int>(tileType);
+    // Copy tile data
+    for (int y = 0; y < editorHeight; ++y) {
+        for (int x = 0; x < editorWidth; ++x) {
+            gameMap.grid[y][x] = static_cast<int>(editorGrid[y][x]);
         }
     }
 }

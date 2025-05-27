@@ -3,50 +3,110 @@
 
 int main()
 {
-    // Crear ventana
-    sf::RenderWindow window(sf::VideoMode(1200, 800), "Dead Paradise");
-    window.setFramerateLimit(60);
+    // Window settings
+    const unsigned int WINDOW_WIDTH = 1200;
+    const unsigned int WINDOW_HEIGHT = 800;
+    const std::string WINDOW_TITLE = "Dead Paradise";
 
-    // Inicializar el juego
+    // Create window
+    sf::RenderWindow window(
+        sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT),
+        WINDOW_TITLE,
+        sf::Style::Titlebar | sf::Style::Close
+    );
+
+    window.setFramerateLimit(60);
+    window.setVerticalSyncEnabled(true);
+
+    // Create renderer
+    Renderer renderer(window);
+
+    // Initialize game
     init(window);
 
-    // Variables para el tiempo
-    sf::Clock clock;
+    // Game timing
+    sf::Clock deltaClock;
+    sf::Clock fpsClock;
+    int frameCount = 0;
 
-    // Bucle principal
-    while (window.isOpen()) {
-        float deltaTime = clock.restart().asSeconds();
+    std::cout << "Starting game loop..." << std::endl;
+    std::cout << "Controls:" << std::endl;
+    std::cout << "- TAB: Toggle Level Editor" << std::endl;
+    std::cout << "- WASD/Arrow Keys: Move (Game) / Move Camera (Editor)" << std::endl;
+    std::cout << "- Space: Jump (Game)" << std::endl;
+    std::cout << "- F5: Quick Save" << std::endl;
+    std::cout << "- F9: Quick Load" << std::endl;
+    std::cout << "- ESC: Exit" << std::endl;
+    std::cout << std::endl;
+    std::cout << "Level Editor Controls:" << std::endl;
+    std::cout << "- 1-5: Select basic tiles (Wall, Platform, Spikes, Torch, Door)" << std::endl;
+    std::cout << "- Q,W,E,A,S,D,Z,X,C: Select tileset blocks" << std::endl;
+    std::cout << "- Left Click: Place tile" << std::endl;
+    std::cout << "- Right Click: Erase tile" << std::endl;
+    std::cout << "- G: Toggle grid" << std::endl;
+    std::cout << "- F1: Save level, F2: Load level, F3: Export as image" << std::endl;
 
-        // Manejar eventos
+    // Main game loop
+    while (window.isOpen())
+    {
+        // Calculate delta time
+        float deltaTime = deltaClock.restart().asSeconds();
+
+        // Handle events
         sf::Event event;
-        while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed) {
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+            {
                 window.close();
             }
 
-            // Pasar eventos al juego
+            // Handle ESC key to close
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
+            {
+                if (!showLevelEditor)
+                {
+                    window.close();
+                }
+            }
+
+            // Handle game input
             HandleInput(event, window);
         }
 
-        // Actualizar
+        // Update game logic
         Update(deltaTime);
 
-        // Configurar la vista de la cámara
-        window.setView(camera.getView(sf::Vector2f(window.getSize())));
+        // Set camera view
+        sf::View gameView = camera.getView(sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
+        window.setView(gameView);
 
-        // Limpiar pantalla
-        window.clear(sf::Color(0, 0, 0)); // Fondo oscuro
+        // Clear window
+        window.clear(sf::Color(50, 50, 80)); // Dark blue background
 
-        // Crear renderer y dibujar
-        Renderer renderer(window);
+        // Render game objects
         Render(renderer);
 
-        // Dibujar UI (se dibuja después de restaurar la vista por defecto)
+        // Reset view for UI
+        window.setView(window.getDefaultView());
+
+        // Render UI
         RenderUI(window);
 
-        // Mostrar
+        // Display frame
         window.display();
+
+        // Calculate and display FPS every second
+        frameCount++;
+        if (fpsClock.getElapsedTime().asSeconds() >= 1.0f)
+        {
+            float fps = frameCount / fpsClock.restart().asSeconds();
+            std::string newTitle = WINDOW_TITLE + " - FPS: " + std::to_string((int)fps);
+            window.setTitle(newTitle);
+            frameCount = 0;
+        }
     }
 
+    std::cout << "Game ended. Goodbye!" << std::endl;
     return 0;
 }

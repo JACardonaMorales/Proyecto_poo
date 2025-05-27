@@ -70,22 +70,22 @@ void LevelEditor::LoadTextures()
 {
     // Load individual textures
     sf::Texture spikesTexture;
-    if (spikesTexture.loadFromFile("assets/spikes.png")) {
+    if (spikesTexture.loadFromFile("assets/sprites/spike.png")) {
         Resources::textures["spikes"] = spikesTexture;
     }
 
     sf::Texture torchTexture;
-    if (torchTexture.loadFromFile("assets/torch.png")) {
+    if (torchTexture.loadFromFile("assets/sprites/torch.png")) {
         Resources::textures["torch"] = torchTexture;
     }
 
     sf::Texture tilesetTexture;
-    if (tilesetTexture.loadFromFile("assets/tileset.png")) {
+    if (tilesetTexture.loadFromFile("assets/sprites/tileset.png")) {
         Resources::textures["tileset"] = tilesetTexture;
     }
 
     sf::Texture doorTexture;
-    if (doorTexture.loadFromFile("assets/door.png")) {
+    if (doorTexture.loadFromFile("assets/sprites/door.png")) {
         Resources::textures["door"] = doorTexture;
     }
 
@@ -107,7 +107,7 @@ void LevelEditor::LoadTextures()
 void LevelEditor::SetupUI()
 {
     // Load font for UI
-    if (!font.loadFromFile("assets/font.ttf")) {
+    if (!font.loadFromFile("assets/arial.ttf")) {
         // Use default font if custom font fails to load
     }
 

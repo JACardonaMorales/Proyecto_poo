@@ -20,12 +20,12 @@ void Map::CreateDefaultTextures()
 {
     // Load actual textures
     sf::Texture spikesTexture;
-    if (spikesTexture.loadFromFile("assets/sprites/spikes.png")) {
+    if (spikesTexture.loadFromFile("assets/sprites/spike.png")) {
         Resources::textures["spikes"] = spikesTexture;
     }
 
     sf::Texture torchTexture;
-    if (torchTexture.loadFromFile("assets/sprites/torch_spritesheet.png")) {
+    if (torchTexture.loadFromFile("assets/sprites/torch.png")) {
         Resources::textures["torch"] = torchTexture;
     }
 
@@ -236,7 +236,7 @@ void Map::InitFromImage(const sf::Image& image)
             else if (pixel == sf::Color::White) {
                 grid[y][x] = static_cast<int>(TileType::WALL);
             }
-            else if (pixel == sf::Color::Brown) {
+            else if (pixel == sf::Color::Red) {
                 grid[y][x] = static_cast<int>(TileType::PLATFORM);
             }
             else if (pixel == sf::Color::Red) {
