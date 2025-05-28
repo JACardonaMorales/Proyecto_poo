@@ -4,7 +4,7 @@
 #include <SFML/Window.hpp>
 
 Ray::Ray()
-    : walk_animation(32, "assets/Ray/textures/RayMovement.png", 3),
+    : walk_animation(32, "assets/Ray/textures/RayMovement.png", 5),
     lifes(3), dead(false), flipped(false), on_ground(false),
     enemy_bounce_speed(0.0f), horizontal_speed(0.0f), vertical_speed(0.0f),
     x(100.0f), y(100.0f), jump_timer(0), powerup_state(0),
